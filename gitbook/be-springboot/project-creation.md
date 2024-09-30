@@ -29,7 +29,7 @@ In IDE, select _File -> New -> Project_.
 
 In the opened window select _SpringBoot_.
 
-![Project creation - set up](imgs/project.png Project creation - set up)
+![Project creation - set up](imgs/project.png)
 
 Set:
 
