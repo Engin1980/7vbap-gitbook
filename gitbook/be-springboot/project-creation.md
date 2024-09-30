@@ -29,7 +29,7 @@ In IDE, select _File -> New -> Project_.&#x20;
 
 In the opened window select _SpringBoot_.&#x20;
 
-TODO (project.png)
+[!Project creation](imgs/project.png)
 
 Set:
 
@@ -100,7 +100,7 @@ To add the Lombok library into the project, you must add the dependency into Mav
 
 Then, you need to enable Lombok preprocessing support in IDEA in project settings (_File -> Settings_) and selecting _Build, Execution, Deployment -> Compiler -> Annotation Processors -> Enable annotation processing (checked) + Obtain processors from class path_.
 
-TODO Lombok
+[!Set up Lombok annotation](Imgs/lombok.png Setting up lombok annotation)
 
 ### JPA
 
