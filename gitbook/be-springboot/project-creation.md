@@ -29,7 +29,7 @@ In IDE, select _File -> New -> Project_.
 
 In the opened window select _SpringBoot_.
 
-[!Project creation](imgs/project.png)
+![Project creation - set up](imgs/project.png Project creation - set up)
 
 Set:
 
@@ -44,7 +44,7 @@ Set:
 * set Java version to 23,
 * choose packaging to JAR.
 
-TODO (dependencies.png)
+![Project creation - dependencies](imgs/dependencies.png)
 
 On the next page, you will select the added dependencies (libraries) (those can be adjusted later). At the beginning, we will need:
 
@@ -100,9 +100,7 @@ To add the Lombok library into the project, you must add the dependency into Mav
 
 Then, you need to enable Lombok preprocessing support in IDEA in project settings (_File -> Settings_) and selecting _Build, Execution, Deployment -> Compiler -> Annotation Processors -> Enable annotation processing (checked) + Obtain processors from class path_.
 
-\[!Set up Lombok annotation]\(Imgs/lombok.png Setting up lombok annotation)
-
-<figure><img src="https://avatars.githubusercontent.com/u/45949248?v=4" alt=""><figcaption><p>test</p></figcaption></figure>
+![Set up Lombok annotation](imgs/lombok.png Setting up lombok annotation)
 
 ### JPA
 
