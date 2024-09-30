@@ -9,6 +9,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.TestPropertySource;
 
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest()
@@ -28,7 +30,7 @@ public class AppUserTest {
   }
 
   @Test()
-  void duplicitUser() {
+  void duplicateUser() {
 
     AppUser a = new AppUser("john.doe@osu.cz");
     appUserRepository.save(a);
@@ -43,5 +45,17 @@ public class AppUserTest {
       assertTrue(ex.getMessage().toLowerCase().contains("duplicate"));
       assertTrue(ex.getMessage().toLowerCase().contains("jane.doe@osu.cz"));
     }
+  }
+
+  @Test()
+  void emailStoredLowerCase(){
+    String email = "MIKE.WHITE@OSU.CZ";
+    AppUser a = new AppUser(email);
+    appUserRepository.save(a);
+    int aId = a.getAppUserId();
+
+    Optional<AppUser> oa = appUserRepository.findById(aId);
+    assertTrue(oa.isPresent());
+    assertEquals(oa.get().getEmail(), "MIKE.WHITE@OSU.CZ".toLowerCase());
   }
 }
