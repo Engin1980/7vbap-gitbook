@@ -4,7 +4,7 @@
 
 ## BE - SpringBoot
 
-* [Page 1](be-springboot/page-1.md)
+* [Project creation](be-springboot/project-creation.md)
 
 ## BE - .NET
 
