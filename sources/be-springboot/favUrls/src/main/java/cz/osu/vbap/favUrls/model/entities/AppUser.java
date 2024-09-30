@@ -31,4 +31,10 @@ public class AppUser {
 
     this.email = email;
   }
+
+  @PrePersist
+  private void prePersistCheck(){
+    if (email != null)
+      email = email.toLowerCase();
+  }
 }
