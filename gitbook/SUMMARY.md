@@ -2,9 +2,9 @@
 
 * [Page](README.md)
 
-## BE - SpringBoot
+## BE - Spring Boot
 
-* [Project creation](be-springboot/project-creation.md)
+* [Project creation](be-spring-boot/project-creation.md)
 
 ## BE - .NET
 

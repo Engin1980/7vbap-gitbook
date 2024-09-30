@@ -9,7 +9,7 @@ description: This page desribed, how initial SpringBoot project is created and c
 
 To create the project, the following prerequisities must be fulfilled:
 
-* IntelliJ IDEA Ultimate edition - _Ultimate_ edition is required for easy database management, Maven project management and easy _SpringBoot_ project creation.
+* IntelliJ IDEA Ultimate edition - _Ultimate_ edition is required for easy database management, Maven project management and easy _Spring Boot_ project creation.
 * Java 23 - can be installed during the project creation. However, the project will work for some older Java versions.
 * MariaDB database server - you can use any other relation database server (PostgreSQL, MySQL, MS-SQL, or other). Note that if you use different server, you must adjust some parts of the code (mainly Maven database driver dependencies). Moreover, in some servers some features may not be available.
 
@@ -27,9 +27,9 @@ Start IDEA.
 
 In IDE, select _File -> New -> Project_.
 
-In the opened window select _SpringBoot_.
+In the opened window select _Spring Boot_.
 
-![Project creation - set up](imgs/project.png)
+![Project creation - set up](../be-springboot/imgs/project.png)
 
 Set:
 
@@ -44,7 +44,7 @@ Set:
 * set Java version to 23,
 * choose packaging to JAR.
 
-![Project creation - dependencies](imgs/dependencies.png)
+![Project creation - dependencies](../be-springboot/imgs/dependencies.png)
 
 On the next page, you will select the added dependencies (libraries) (those can be adjusted later). At the beginning, we will need:
 
@@ -53,8 +53,13 @@ On the next page, you will select the added dependencies (libraries) (those can 
 * `Spring Data JPA` to support ORM in Java,
 * `MariaDB` driver to connect to the selected specific database system.
 
+{% hint style="info" %}
+In newest IDEA editions, you can simply adjust the preset dependencies by opening the `pom.xml` file and selecting `Edit starters` from the `<dependencies>` section.
+{% endhint %}
 
-![Updating SpringBoot dependencies](imgs/add-starters.png)
+![Updating SpringBoot dependencies](../be-springboot/imgs/add-starters.png)
+
+The most important technologies will be explained now.
 
 ### Maven
 
@@ -65,6 +70,12 @@ Maven is a build automation and project management tool primarily used for Java 
 3. **Build Automation**: It can compile, package, test, and deploy the project, based on predefined or custom configurations.
 4. **Convention Over Configuration**: Maven follows a set of conventions to make it easier to set up and organize project structures, reducing the need for custom build scripts.
 5. **Plugin System**: Maven is highly extensible with plugins, which can handle everything from compiling code to deploying applications to servers.
+
+We will use Maven primarily as a dependency manager .Spring Boot and IDEA sometimes updates the dependencies for you. However, you can add any required dependency by adjusting the `pom.xml` file and its `dependencies` section. To find the correct library/dependency, you can use _Maven Repository_.
+
+{% embed url="https://mvnrepository.com/" %}
+Maven Repository Website
+{% endembed %}
 
 ### Lombok
 
@@ -103,7 +114,11 @@ To add the Lombok library into the project, you must add the dependency into Mav
 
 Then, you need to enable Lombok preprocessing support in IDEA in project settings (_File -> Settings_) and selecting _Build, Execution, Deployment -> Compiler -> Annotation Processors -> Enable annotation processing (checked) + Obtain processors from class path_.
 
-![Set up Lombok annotation](imgs/lombok.png)
+![Set up Lombok annotation](../be-springboot/imgs/lombok.png)
+
+{% embed url="https://projectlombok.org/" %}
+Project Lombok Website
+{% endembed %}
 
 ### JPA
 
