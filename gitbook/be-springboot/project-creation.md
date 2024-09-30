@@ -53,6 +53,9 @@ On the next page, you will select the added dependencies (libraries) (those can 
 * `Spring Data JPA` to support ORM in Java,
 * `MariaDB` driver to connect to the selected specific database system.
 
+
+![Updating SpringBoot dependencies](imgs/add-starters.png)
+
 ### Maven
 
 Maven is a build automation and project management tool primarily used for Java projects. It helps developers manage a project’s build, dependencies, documentation, and reporting in a standardized way. Here's a breakdown of Maven's key aspects:
@@ -100,7 +103,7 @@ To add the Lombok library into the project, you must add the dependency into Mav
 
 Then, you need to enable Lombok preprocessing support in IDEA in project settings (_File -> Settings_) and selecting _Build, Execution, Deployment -> Compiler -> Annotation Processors -> Enable annotation processing (checked) + Obtain processors from class path_.
 
-![Set up Lombok annotation](imgs/lombok.png Setting up lombok annotation)
+![Set up Lombok annotation](imgs/lombok.png)
 
 ### JPA
 
