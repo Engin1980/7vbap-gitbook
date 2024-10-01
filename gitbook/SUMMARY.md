@@ -5,6 +5,7 @@
 ## BE - Spring Boot
 
 * [Project creation](be-spring-boot/project-creation.md)
+* [Database & JPA](be-spring-boot/database-and-jpa.md)
 
 ## BE - .NET
 
