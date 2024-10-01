@@ -19,7 +19,7 @@ As the domain, we are creating application users. Every user can have multiple f
 
 The following schema should look like on the next image.
 
-TODO image
+![Proposed (and estimated) database schema](imgs/db-schema.png)
 
 {% hint style="info" %}
 Note that the real database schema will be created by JPA tool. It may not (and probably will not) match exactly the proposed schema. The proposed schema on the image above is only for the illustration.
@@ -31,12 +31,61 @@ Note that the real database schema will be created by JPA tool. It may not (and 
 Here we assume you have your database server already installed and running.
 {% endhint %}
 
-### Database creation
+In this tutorial, we will name the database as `FavUrlsDB`. For testing purposes, you can also create `FavUrlsTestDB`. 
 
-The first step is to create your database. In this tutorial, we will name the database as `FavUrlsDB`. For testing purposes, you can also create `FavUrlsTestDB`. There are several possibilities how to create the database:
+{%hint style="info" %} The way how to create a new database/user differs between different database servers. If you are not sure how to create a new database, check the documentation of you database server.
 
-* You have some external tool to access the database system. In this case, start the tool, connect to the database server and create a new database.
-* You have access credentials to the database server and no external tool. In this case, you can use IDEA to access the database server. Follow the tutorial mentioned later "Database creation using IDEA database tools", but omit the database name. Then, use console window to create a new database.
+Some quick hints:
+* MS-SQL - you can use direct connection without specified database. Or, you can use Microsoft SQL Server Management Studio to manage database server and its databases.
+* MariaDB/MySQL (service) - when installed as a service, you can connect the server using common third-party tools using specified name and password without existing database.
+* MariaDB/MySQL (local) - when executed locally, only default user is created (see the tutorial at the end of this page if necessary). You have to connect using command-line tool, create a database and add a specific user to this database to get user/password access.
+
+{% endhint %}
+
+### Connecting IDEA to the database server
+
+IntelliJ IDEA as  bulit in database management support for several database systems. MariaDB is one of them.
+
+In IDEA, you can choose, create and store predefined database connection to a specific database server (and database, if required). In this connection, you can open a console window for SQL commands, which will be submitted to the database server.
+
+To create the database connection in IDEA:
+
+1. From the right narrow menu, select the database icon.
+2. In the `Database` window, expand the plus `+` sign and choose `Data source` option.
+3. From the list of available database select the requested one.
+4. In the opened window, submit the required connection data:
+
+![Creation of DB connection in IntelliJ IDEA](imgs/db-idea.png)
+
+You should enter:
+  * Name - how the connection will be called.
+  * Host - to set the target database server. Typically, use network computer name, IP address, or `localhost` for the database server on the local machine.
+* Port - number of the port where the database server is listening to. Typically, this value is preset to the default with respect to the selected database provider. However, you can adjust this value if required. Default value for MariaDB is 3306.
+* Authentication - choose the way how you will authenticate the database user. Common authentications are:
+  * None - if no authentication is required.
+  * User / Password - to provide username and password.
+  * Windows Credentials - to authenticate user using current windows user (typical - but not only for - MS SQL Server).
+* User + Password - if this authentication is selected, enter the username and password. Option `Save` defines, how the credentials are stored.
+* Database - **as we do not have any yet, leave this blank**.
+* URL - common JDBC connection string created by the data entered above.
+
+5. Look for the `Missing Drivers` note above the `Test Connection` note. This button will download required database drivers to the IDEA (not into the project!). Once drivers are available, the note will vanish.
+6. Test the connection using the `Test Connection` button. If everything is set up correctly, you should see a message confirming a successfull connection.
+7. Finally, store the connection.
+
+### Opening IDEA Console for SQL commands + database creation
+
+/hint This section explains how to create a console window to submit SQL commands. Here, we only create a database, but you can use this console window to executed any SQL command later.
+
+
+
+### Sidenote: Database creation using MariaDB command line tools
+
+TODO
+
+
+
+Some
 
 #### Database creation using MariaDB command line tools
 
@@ -63,12 +112,3 @@ create table FavUrlsDB;
 4. Add required grants to the user (or create a new user) if required for the database.
 5. Quit the console client.
 6. Follow the next section, but enter the database name when asked to do so.
-
-#### Database creation using IDEA database tools
-
-IntelliJ IDEA as  bulit in database management support for several database systems. MariaDB is one of them.
-
-TODO
-
-
-
