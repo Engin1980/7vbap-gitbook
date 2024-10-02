@@ -498,7 +498,129 @@ Now, you should be able to connect to the `DATABASE_NAME` with username `USERNAM
 
 ### Checking arguments - ArgVal class
 
-TODO
+It is important to check the arguments of the functions - at least for the public ones, as you must ensure that there is no nonsense incoming into the function.&#x20;
+
+Typically, you check those arguments at the beginning of the function using a sequence of `if` conditions followed by `throw` statements with the exception data. As `if` statements typically multiline, the code of the function easily became long, especially for more complex checks:
+
+```java
+// ...
+public class Tag {
+  // ...
+
+  public Tag(AppUser user, String title, String color) {
+    if (user == null)
+      throw new IllegalArgumentException("User is null");
+    if (title == null || title.trim().isEmpty())
+      throw new IllegalArgumentException("Title is empty.");
+    if (color.matches("[0-9a-fA-F]{" + COLOR_LENGTH + "}"))
+      throw new IllegalArgumentException("Color does not match the specified regular expression.");
+	
+    // ...
+  }
+}
+```
+
+Even in this example the intro checks immediatelly look complicated.
+
+Therefore, it is common to use some additional library or create a custom one to get rid of the complex `if` calls.
+
+The updated code may look like:
+
+```java
+// ...
+public class Tag {
+  // ...
+
+  public Tag(AppUser user, String title, String color) {
+    ArgVal.notNull(user, "user");
+    ArgVal.notWhitespace(title, "title");
+    ArgVal.matchRegex(color, "[0-9a-fA-F]{" + COLOR_LENGTH + "}", "color");
+	
+    // ...
+  }
+}
+```
+
+The code above is easier to read - not in the meaning that it you need to read less data for understanding, but in the meaning that you can optically "skip" all the lines starting with `ArgVal` and ignore them, what cannot be so easily visually achieveable in the case of more complex `if` blocks.
+
+Of course, if the validation section is too long, you can consider the creation of some sanity checking function to remove all the checks, like:
+
+```java
+// ...
+public class Tag {
+  // ...
+
+  public Tag(AppUser user, String title, String color) {
+    validateArgs(user, title, color);
+	
+    // ...
+  }
+}
+```
+
+However, in most cases a custom method validating arguments for another method may be an overkill.
+
+In our case we created a simple `ArgVal` class, which contains some basic methods, but will be extended in the future. Check the Git repository for the most current implementation if necessary:
+
+```java
+package cz.osu.vbap.favUrls.lib;
+
+import org.jetbrains.annotations.Contract;
+
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+public class ArgVal {
+  @Contract(pure = true)
+  public static void notNull(Object value, String argName) {
+    if (value == null) {
+      throw new IllegalArgumentException(argName + " must not be null");
+    }
+  }
+
+  @Contract(pure = true)
+  public static void matchRegex(String text, String regex, String argName) {
+    if (text == null || !text.matches(regex)) {
+      throw new IllegalArgumentException(argName + " must match regex " + regex + ". Invalid value: " + text);
+    }
+  }
+
+  @Contract(pure = true)
+  public static void notWhitespace(String text, String argName) {
+    if (text == null || text.trim().isEmpty()) {
+      throw new IllegalArgumentException(argName + " must not be empty.");
+    }
+  }
+
+  public static void isTrue(Supplier<Boolean> validator, String argName) {
+    boolean res;
+    try{
+      res = validator.get();
+      if (!res) throw new IllegalArgumentException(argName + " failed to pass 'isTrue' validation");
+    }catch (Exception ex){
+      throw new IllegalArgumentException(argName + " crashed when passing 'isTrue' validation");
+    }
+  }
+}
+```
+
+The explanation will be provided for the last method `isTrue` only.
+
+The method accepts a special argument - `Supplier<Boolean>`, what in general is a function accepting no arguments and returning bool value. The purpose of this supplier is to return true or false. If `false` value is returned, the method `isTrue` will invoke an exception.
+
+The method is supposed to be called with a lambda expression of type `Supplier<Boolean>`, that is accepting no arguments and returning null, e.g.:
+
+```java
+ArgVal.isTrue(() -> title.length() <= 256, "Title is too long.");
+```
+
+{% hint style="info" %}
+A **lambda expression** in Java is a way to express instances of single-method interfaces (functional interfaces) in a more concise and readable way. Introduced in **Java 8**, lambda expressions help reduce the amount of boilerplate code, especially when working with functional-style operations on collections, like `map`, `filter`, and `forEach`.
+{% endhint %}
+
+{% embed url="https://www.geeksforgeeks.org/lambda-expressions-java-8/" %}
+More detailed explanation of Java Lambda expressions
+{% endembed %}
 
 ### @Contract Pure
 
@@ -512,6 +634,14 @@ When `pure=true` is specified in the `@Contract` annotation, it indicates that t
 * **Has no side effects**.
 * Always returns the same result when given the same inputs (idempotent).
 
+{% hint style="info" %}
+A **side effect** occurs when a function or method performs an action that affects the outside world or modifies some state beyond returning a value. Side effects are typically any observable effects outside the function itself, like modifying global or external variables, performing I/O operations, or altering the state of objects.
+{% endhint %}
+
+So, you can use `@Contract(pure=true)` to mark functions without supposed side effect, what can improve further code analysis and make code more error-proof.
+
+However, to use this annotation, you need to add additional dependency to `pom.xml` file:
+
 ```xml
 <dependency>
     <groupId>org.jetbrains</groupId>
@@ -519,3 +649,8 @@ When `pure=true` is specified in the `@Contract` annotation, it indicates that t
     <version>RELEASE</version>
 </dependency>
 ```
+
+{% embed url="https://www.baeldung.com/jetbrains-contract-annotation" %}
+Java @Contract explanation in more detail
+{% endembed %}
+
