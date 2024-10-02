@@ -398,7 +398,63 @@ Unfortunately, this annotation is not a part of common JPA libraries. To use it,
 
 ## Creating Repositories
 
-TODO
+JPA based repositories inherits from the interface `JpaRepository` with two generic arguments. The first one is the entity type, the second is the type of the primary key. So, in our case, we can simply create three repository interfaces:
+
+```java
+package cz.osu.vbap.favUrls.model.repositories;
+
+import cz.osu.vbap.favUrls.model.entities.AppUser;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface AppUserRepository extends JpaRepository<AppUser, Integer> {
+    Optional<AppUser> getByEmail();
+}
+```
+
+```java
+package cz.osu.vbap.favUrls.model.repositories;
+
+import cz.osu.vbap.favUrls.model.entities.AppUser;
+import cz.osu.vbap.favUrls.model.entities.Url;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Collection;
+
+public interface UrlRepository extends JpaRepository<Url, Integer> {
+    Collection<Url> getByUser(AppUser appUser);
+}
+```
+
+```java
+package cz.osu.vbap.favUrls.model.repositories;
+
+import cz.osu.vbap.favUrls.model.entities.Tag;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface TagRepository extends JpaRepository<Tag, Integer> {}
+```
+
+{% hint style="info" %}
+Note that repositories are **interfaces**. The specific implementation is provided by JPA on request when needed.
+{% endhint %}
+
+{% hint style="info" %}
+Note that before was mandatory to append `@Repository` annotation. Now, it is added by default and is not needed.
+{% endhint %}
+
+You can specify additional custom query methods into the interfaces when needed - like `getByEmail()` in `AppUserRepository`. For those methods, you can use specific JPA-query-language JPQL to specify the query request.
+
+{% embed url="https://www.baeldung.com/spring-data-jpa-query" %}
+Introduction to custom JPA queries
+{% endembed %}
+
+{% embed url="https://docs.spring.io/spring-data/jpa/reference/repositories/query-methods-details.html" %}
+Exhaustive explanation of JPA query methods
+{% endembed %}
+
+{% embed url="https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html" %}
+Exhaustive explanation of JPA query methods using JPQL
+{% endembed %}
 
 ## Testing
 
