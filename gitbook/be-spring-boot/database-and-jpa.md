@@ -19,9 +19,7 @@ As the domain, we are creating application users. Every user can have multiple f
 
 The following schema should look like on the next image.
 
-
-
-TODO image
+![Proposed (and estimated) database schema](imgs/db-schema.png)
 
 {% hint style="warning" %}
 Note that the real database schema will be created by JPA tool. It may not (and probably will not) match exactly the proposed schema. The proposed schema on the image above is only for the illustration.
