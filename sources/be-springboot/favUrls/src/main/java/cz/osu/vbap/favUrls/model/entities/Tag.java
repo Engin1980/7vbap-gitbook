@@ -26,11 +26,11 @@ public class Tag {
   @Size(min = COLOR_LENGTH, max = COLOR_LENGTH)
   private String color;
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "app_user_id", foreignKey = @ForeignKey(name = "FK_tag_app_user"))
   private AppUser appUser;
 
-  @ManyToMany(mappedBy = "tags")
+  @ManyToMany(mappedBy = "tags", fetch = FetchType.LAZY)
   private Collection<Url> urls;
 
   @Contract(pure = true)

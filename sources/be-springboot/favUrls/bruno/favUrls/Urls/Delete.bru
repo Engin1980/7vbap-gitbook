@@ -1,0 +1,17 @@
+meta {
+  name: Delete
+  type: http
+  seq: 3
+}
+
+delete {
+  url: http://localhost:32123/v1/url/1
+  body: multipartForm
+  auth: none
+}
+
+body:multipart-form {
+  appUserId: 1
+  title: Vatsim
+  address: www.vatsim.net
+}

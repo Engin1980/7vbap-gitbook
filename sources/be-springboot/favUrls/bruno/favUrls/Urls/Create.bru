@@ -1,0 +1,17 @@
+meta {
+  name: Create
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:32123/v1/url
+  body: multipartForm
+  auth: none
+}
+
+body:multipart-form {
+  appUserId: 1
+  title: Vatsim
+  address: www.vatsim.net
+}

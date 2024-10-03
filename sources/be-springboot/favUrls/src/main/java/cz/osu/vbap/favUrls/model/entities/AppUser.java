@@ -19,13 +19,13 @@ public class AppUser {
   private String email;
   private String passwordHash;
 
-  @OneToMany(mappedBy = "appUser")
+  @OneToMany(mappedBy = "appUser", fetch = FetchType.LAZY)
   private Collection<Url> urls;
 
-  @OneToMany(mappedBy = "appUser")
+  @OneToMany(mappedBy = "appUser", fetch = FetchType.LAZY)
   private Collection<Tag> tags;
 
-  @OneToMany(mappedBy = "appUser")
+  @OneToMany(mappedBy = "appUser", fetch = FetchType.LAZY)
   private Collection<Token> tokens;
 
   @Contract(pure = true)
