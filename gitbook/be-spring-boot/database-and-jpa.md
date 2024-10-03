@@ -535,9 +535,104 @@ You can see:
 * The `initDatabase()` method returns a lamba expression - a reference to another anonymous metod - see the `return _ -> {};` statement at lines 36 to 52.
 * The inner anonymous method will do the database initialization.
 
-### Using Unit Tests
+## Testing with Unit Tests
 
-TODO
+You can use Unit Testing to test the database. To do so, you typically need to:
+
+* create an alternating or replacing version of `application.properties` file with the property values updated w.r.t. the test, and
+* create appropriate unit testing methods.
+
+### Replacing default properties
+
+Create a new configuration file at `.../src/test/resources` called e.g. `test.properties`. Adjust the content of the file by replacing the original `application.properties`,  e.g.:
+
+```properties
+spring.datasource.url=jdbc:mariadb://localhost:3306/favUrlsTestDB
+```
+
+Here, we have changed the original database.
+
+Now, create a unit testing class with the new annotations marking a spring boot test with specific testing properties:
+
+{% code lineNumbers="true" %}
+```java
+package cz.osu.vbap.favUrls.model.db;
+
+// ...
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
+
+@SpringBootTest()
+@TestPropertySource(locations =
+        {"classpath:application.properties", "classpath:test.properties"}) 
+public class AppUserTest {
+
+}
+```
+{% endcode %}
+
+Here, the annotation at line 17/18 tells "load `application.properties` and **then** load `test.properties`, what will replace/extend the original configuration).
+
+### Writing a test
+
+A test is simple and is no different from the common unit test:
+
+```javascript
+package cz.osu.vbap.favUrls.model.db;
+
+import cz.osu.vbap.favUrls.model.entities.AppUser;
+import cz.osu.vbap.favUrls.model.repositories.AppUserRepository;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.test.context.TestPropertySource;
+
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+@SpringBootTest()
+@TestPropertySource(locations =
+        {"classpath:application.properties", "classpath:test.properties"})
+public class AppUserTest {
+
+  @Autowired
+  AppUserRepository appUserRepository;
+
+  @Test()
+  void duplicateUser() {
+
+    AppUser a = new AppUser("john.doe@osu.cz");
+    appUserRepository.save(a);
+
+    AppUser b = new AppUser("jane.doe@osu.cz");
+    appUserRepository.save(b);
+
+    AppUser c = new AppUser("jane.doe@osu.cz");
+    try {
+      appUserRepository.save(c);
+      fail("Duplicate email should not be saved");
+    } catch (DataIntegrityViolationException ex) {
+      assertTrue(ex.getMessage().toLowerCase().contains("duplicate"));
+      assertTrue(ex.getMessage().toLowerCase().contains("jane.doe@osu.cz"));
+    }
+  }
+
+  @Test()
+  void emailStoredLowerCase(){
+    String email = "MIKE.WHITE@OSU.CZ";
+    AppUser a = new AppUser(email);
+    appUserRepository.save(a);
+    int aId = a.getAppUserId();
+
+    Optional<AppUser> oa = appUserRepository.findById(aId);
+    assertTrue(oa.isPresent());
+    assertEquals(oa.get().getEmail(), email.toLowerCase());
+  }
+}
+```
 
 ## Database Migrations
 
