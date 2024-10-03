@@ -25,7 +25,7 @@ public class Url {
 
   @ManyToOne
   @JoinColumn(name = "app_user_id", foreignKey = @ForeignKey(name = "FK_url_app_user"))
-  private AppUser user;
+  private AppUser appUser;
 
   @ManyToMany
   @JoinTable(name = "url_tag",
@@ -34,13 +34,13 @@ public class Url {
   private Collection<Tag> tags;
 
   @Contract(pure = true)
-  public Url(AppUser user, String title, String address, Tag... tags) {
-    ArgVal.notNull(user, "user");
+  public Url(AppUser appUser, String title, String address, Tag... tags) {
+    ArgVal.notNull(appUser, "user");
     ArgVal.notWhitespace(title, "title");
     ArgVal.isTrue(() -> title.length() <= 256, "Title must have 256 characters at most.");
     ArgVal.notWhitespace(address, "address");
 
-    this.user = user;
+    this.appUser = appUser;
     this.title = title;
     this.address = address;
     if (tags.length > 0) {

@@ -19,11 +19,14 @@ public class AppUser {
   private String email;
   private String passwordHash;
 
-  @OneToMany(mappedBy = "user")
+  @OneToMany(mappedBy = "appUser")
   private Collection<Url> urls;
 
-  @OneToMany(mappedBy = "user")
+  @OneToMany(mappedBy = "appUser")
   private Collection<Tag> tags;
+
+  @OneToMany(mappedBy = "appUser")
+  private Collection<Token> tokens;
 
   @Contract(pure = true)
   public AppUser(@NonNull String email) {
