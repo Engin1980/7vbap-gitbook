@@ -7,6 +7,12 @@ description: >-
 
 # Database & JPA
 
+{% embed url="https://github.com/Engin1980/7vbap-gitbook/tree/be-spring-boot-database-entities-repositories" %}
+Relative source codes to this chapter
+{% endembed %}
+
+
+
 ## Expected database schema
 
 {% hint style="info" %}
