@@ -466,11 +466,11 @@ Entity is a bit more complicated. Except already known stuff, we have here:
 * It contains inner enum type `Type` distinguishing between refresh or password-reset tokens. Every value of this enum can be transformed into a char - lines 22-27.
 * Forced uniqueness of tuple of attributes `appUser` and `type`. That means only one combination for an user and a type is allowed. As this is complex unique constraint, it must be defined over the table (instead of a column) - lines 17-19.
 
-Moeover, we need to define how `Token.Type` will be stored (JPA has by default no idea how to store an enum). There are several options:
+Moeover, we need to define how `Token.Type` will be stored.&#x20;
 
-{% embed url="https://www.baeldung.com/jpa-persisting-enums-in-jpa" %}
-How to work with enum in JPA
-{% endembed %}
+{% hint style="info" %}
+JPA has by default no idea how to store an enum into the database. There are several options available. For options and their explanations see the link below.
+{% endhint %}
 
 We will write a custom converter named `TokenTypeConverter` placed at `.../model/converters`:
 
@@ -514,6 +514,14 @@ Converter is pretty straighforward:
 * Forward conversion is simple
 * Backward conversion tries to extrac the correct enum value from char based on token values using collection lambda.&#x20;
 * The attribute value `autoApply=true` tells JPA to use this converter everytime it meets with `Token.Type` datatype - line 9.
+
+{% embed url="https://www.baeldung.com/jpa-unique-constraints" %}
+How an unique constraint can be defined in JPA
+{% endembed %}
+
+{% embed url="https://www.baeldung.com/jpa-persisting-enums-in-jpa" %}
+How to work with enum in JPA
+{% endembed %}
 
 ## Creating Repositories
 
