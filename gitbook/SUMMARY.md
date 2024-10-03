@@ -6,6 +6,8 @@
 
 * [Project creation](be-spring-boot/project-creation.md)
 * [Database & JPA](be-spring-boot/database-and-jpa.md)
+* [Services](be-spring-boot/services.md)
+* [Controllers](be-spring-boot/controllers.md)
 
 ## BE - .NET
 

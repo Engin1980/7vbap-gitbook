@@ -407,7 +407,7 @@ import cz.osu.vbap.favUrls.model.entities.AppUser;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface AppUserRepository extends JpaRepository<AppUser, Integer> {
-    Optional<AppUser> getByEmail();
+    Optional<AppUser> getByEmail(String email);
 }
 ```
 
@@ -444,6 +444,8 @@ Note that before was mandatory to append `@Repository` annotation. Now, it is ad
 
 You can specify additional custom query methods into the interfaces when needed - like `getByEmail()` in `AppUserRepository`. For those methods, you can use specific JPA-query-language JPQL to specify the query request.
 
+TODO: Quering explanation and more examples will be added in the future.
+
 {% embed url="https://www.baeldung.com/spring-data-jpa-query" %}
 Introduction to custom JPA queries
 {% endembed %}
@@ -456,15 +458,181 @@ Exhaustive explanation of JPA query methods
 Exhaustive explanation of JPA query methods using JPQL
 {% endembed %}
 
-## Testing
+## Adding data on app startup
 
-### Using CommandRunner
+To add data on app startup, you can use _CommandLineRunner_.&#x20;
 
-TODO
+A `CommandLineRunner` is a functional interface used to run a block of code at the application startup, after the Spring application context has been initialized. It is often used for tasks like executing some startup logic, initializing resources, or running database checks when the application starts.
 
-### Using Unit Tests
+A `CommandLineRunner` instance returns **a function (!)** invoked when the app is started. To invoke the instance on startup, its declared as a `@Bean`. Also, you can use Dependency Injection (DI) in arguments.
 
-TODO
+The following example will create an `initDatabase()` runner, which will fill the database with some initial data.
+
+{% code lineNumbers="true" %}
+```java
+package cz.osu.vbap.favUrls;
+
+import cz.osu.vbap.favUrls.model.entities.AppUser;
+import cz.osu.vbap.favUrls.model.entities.Tag;
+import cz.osu.vbap.favUrls.model.entities.Url;
+import cz.osu.vbap.favUrls.model.repositories.AppUserRepository;
+import cz.osu.vbap.favUrls.model.repositories.TagRepository;
+import cz.osu.vbap.favUrls.model.repositories.UrlRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+
+@SpringBootApplication
+public class FavUrlsApplication {
+
+  public static void main(String[] args) {
+    SpringApplication.run(FavUrlsApplication.class, args);
+  }
+
+
+  /**
+   * Initializes the database with sample data.
+   *
+   * @param appUserRepository the repository for managing `AppUser` entities
+   * @param tagRepository the repository for managing `Tag` entities
+   * @param urlRepository the repository for managing `Url` entities
+   * @return a `CommandLineRunner` that initializes the database
+   */
+  @Bean
+  public CommandLineRunner initDatabase(
+          @Autowired AppUserRepository appUserRepository,
+          @Autowired TagRepository tagRepository,
+          @Autowired UrlRepository urlRepository) {
+    return _ -> {
+    
+      if (appUserRepository.findByEmail("marek.vajgl@osu.cz").isPresent())
+        return; // data already exist
+    
+      AppUser user = new AppUser("marek.vajgl@osu.cz");
+      appUserRepository.save(user);
+
+      Tag privateTag = new Tag(user, "private", "F00");
+      tagRepository.save(privateTag);
+
+      Tag publicTag = new Tag(user, "public", "0F0");
+      tagRepository.save(publicTag);
+
+      Url url = new Url(user, "OU", "https://www.osu.cz", privateTag, publicTag);
+      urlRepository.save(url);
+    };
+  }
+}
+
+```
+{% endcode %}
+
+You can see:
+
+* Existing repository instances will be automatically added when `initDatabase()` is invoked. Its the responsibility of SpringBoot, as those arguments are annotated with `@Autoired` - lines 33-35.
+* The function is annotated with `@Bean`; otherwise, the code will not be executed - line 31.
+* The `initDatabase()` method returns a lamba expression - a reference to another anonymous metod - see the `return _ -> {};` statement at lines 36 to 52.
+* The inner anonymous method will do the database initialization.
+
+## Testing with Unit Tests
+
+You can use Unit Testing to test the database. To do so, you typically need to:
+
+* create an alternating or replacing version of `application.properties` file with the property values updated w.r.t. the test, and
+* create appropriate unit testing methods.
+
+### Replacing default properties
+
+Create a new configuration file at `.../src/test/resources` called e.g. `test.properties`. Adjust the content of the file by replacing the original `application.properties`,  e.g.:
+
+```properties
+spring.datasource.url=jdbc:mariadb://localhost:3306/favUrlsTestDB
+```
+
+Here, we have changed the original database.
+
+Now, create a unit testing class with the new annotations marking a spring boot test with specific testing properties:
+
+{% code lineNumbers="true" %}
+```java
+package cz.osu.vbap.favUrls.model.db;
+
+// ...
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
+
+@SpringBootTest()
+@TestPropertySource(locations =
+        {"classpath:application.properties", "classpath:test.properties"}) 
+public class AppUserTest {
+
+}
+```
+{% endcode %}
+
+Here, the annotation at line 17/18 tells "load `application.properties` and **then** load `test.properties`, what will replace/extend the original configuration).
+
+### Writing a test
+
+A test is simple and is no different from the common unit test:
+
+```javascript
+package cz.osu.vbap.favUrls.model.db;
+
+import cz.osu.vbap.favUrls.model.entities.AppUser;
+import cz.osu.vbap.favUrls.model.repositories.AppUserRepository;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.test.context.TestPropertySource;
+
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+@SpringBootTest()
+@TestPropertySource(locations =
+        {"classpath:application.properties", "classpath:test.properties"})
+public class AppUserTest {
+
+  @Autowired
+  AppUserRepository appUserRepository;
+
+  @Test()
+  void duplicateUser() {
+
+    AppUser a = new AppUser("john.doe@osu.cz");
+    appUserRepository.save(a);
+
+    AppUser b = new AppUser("jane.doe@osu.cz");
+    appUserRepository.save(b);
+
+    AppUser c = new AppUser("jane.doe@osu.cz");
+    try {
+      appUserRepository.save(c);
+      fail("Duplicate email should not be saved");
+    } catch (DataIntegrityViolationException ex) {
+      assertTrue(ex.getMessage().toLowerCase().contains("duplicate"));
+      assertTrue(ex.getMessage().toLowerCase().contains("jane.doe@osu.cz"));
+    }
+  }
+
+  @Test()
+  void emailStoredLowerCase(){
+    String email = "MIKE.WHITE@OSU.CZ";
+    AppUser a = new AppUser(email);
+    appUserRepository.save(a);
+    int aId = a.getAppUserId();
+
+    Optional<AppUser> oa = appUserRepository.findById(aId);
+    assertTrue(oa.isPresent());
+    assertEquals(oa.get().getEmail(), email.toLowerCase());
+  }
+}
+```
 
 ## Database Migrations
 
@@ -477,7 +645,7 @@ In the Java and Spring Boot ecosystem, two primary tools are commonly used for d
 In this tutorial, we will work with _Flyway_.
 
 {% hint style="info" %}
-Flyway is typically closely connected and related to another common JPA support addon in Idea - _Jpa Buddy_. Also, lot of tutorials show database migration based on Flywy and JPA Buddy.&#x20;
+Flyway is typically closely connected and related to another common JPA support addon in Idea - _Jpa Buddy_. Also, lot of tutorials show database migration based on Flywy and JPA Buddy.
 
 Unfortunately, up to today (2024-10-03) JPA Buddy has a bug causing crash on many IDEA instalations. So, in this tutorial, we will use direct IDEA support for Flyway and database migrations.
 {% endhint %}
@@ -576,7 +744,7 @@ public class AppUser {
 
 Now, we can create a first migration - from the empty state to the state with respect to the current entities defined in our project.
 
-Open the context menu over IDEA database connection and select *Create Flyway Migration...*:
+Open the context menu over IDEA database connection and select _Create Flyway Migration..._:
 
 ![Creation of the new migration in IDEA](imgs/idea-create-migration-I.png)
 
@@ -588,36 +756,106 @@ A new window - Migration Preview Window - will appear. Here we check the correct
 
 ![Migration Preview Window](imgs/idea-create-migration-III.png)
 
-Once confirmed, there will be a new file in the `.../db/migrations` folder.
+Once confirmed, there will be a new file in the `.../db/migrations` folder. The generated content of the file `V1__create_AppUser.sql` is:
 
-## Applying the migration
+```sql
+CREATE TABLE app_user
+(
+    id            INT AUTO_INCREMENT NOT NULL,
+    email         VARCHAR(255) NULL,
+    password_hash VARCHAR(255) NULL,
+    CONSTRAINT pk_appuser PRIMARY KEY (id)
+);
+```
 
+### Applying the migration
 
+The migration is applied automatically once the application is executed. Flyway will check the current database version and if required, apply the missing migrations to get the database to the latest version.
 
+So, to apply the changes, just simply start app. The output will be like:
 
+```
+...
+2024-10-03T13:56:32.386+02:00  INFO 2912 --- [FavUrlMigrationsDemo] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.mariadb.jdbc.Connection@11e355ca
+2024-10-03T13:56:32.387+02:00  INFO 2912 --- [FavUrlMigrationsDemo] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2024-10-03T13:56:32.407+02:00  WARN 2912 --- [FavUrlMigrationsDemo] [           main] o.m.jdbc.message.server.ErrorPacket      : Error: 1193-HY000: Unknown system variable 'WSREP_ON'
+.. here starts the interesting part...
+2024-10-03T13:56:32.421+02:00  INFO 2912 --- [FavUrlMigrationsDemo] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:mariadb://localhost/FavUrlsMigrations (MariaDB 11.4)
+2024-10-03T13:56:32.433+02:00  WARN 2912 --- [FavUrlMigrationsDemo] [           main] o.f.c.internal.database.base.Database    : Flyway upgrade recommended: MariaDB 11.4 is newer than this version of Flyway and support has not been tested. The latest supported version of MariaDB is 11.2.
+2024-10-03T13:56:32.447+02:00  INFO 2912 --- [FavUrlMigrationsDemo] [           main] o.f.c.i.s.JdbcTableSchemaHistory         : Schema history table `favurlsmigrations`.`flyway_schema_history` does not exist yet
+2024-10-03T13:56:32.449+02:00  INFO 2912 --- [FavUrlMigrationsDemo] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 1 migration (execution time 00:00.010s)
+2024-10-03T13:56:32.462+02:00  INFO 2912 --- [FavUrlMigrationsDemo] [           main] o.f.c.i.s.JdbcTableSchemaHistory         : Creating Schema History table `favurlsmigrations`.`flyway_schema_history` ...
+2024-10-03T13:56:32.523+02:00  INFO 2912 --- [FavUrlMigrationsDemo] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema `favurlsmigrations`: << Empty Schema >>
+2024-10-03T13:56:32.527+02:00  INFO 2912 --- [FavUrlMigrationsDemo] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `favurlsmigrations` to version "1 - create AppUser"
+2024-10-03T13:56:32.547+02:00  WARN 2912 --- [FavUrlMigrationsDemo] [           main] o.f.c.i.s.DefaultSqlScriptExecutor       : DB: Name 'pk_appuser' ignored for PRIMARY key. (SQL State:  - Error Code: 1280)
+2024-10-03T13:56:32.562+02:00  INFO 2912 --- [FavUrlMigrationsDemo] [           main] o.f.core.internal.command.DbMigrate      : Successfully applied 1 migration to schema `favurlsmigrations`, now at version v1 (execution time 00:00.020s)
+... here ends the interesting part...
+2024-10-03T13:56:32.618+02:00  INFO 2912 --- [FavUrlMigrationsDemo] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2024-10-03T13:56:32.657+02:00  INFO 2912 --- [FavUrlMigrationsDemo] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.3.Final
+2024-10-03T13:56:32.684+02:00  INFO 2912 --- [FavUrlMigrationsDemo] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2024-10-03T13:56:32.899+02:00  INFO 2912 --- [FavUrlMigrationsDemo] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+```
 
+We can see that the Flyway found that there are no migrations applied yet, creates a helper table and then apply the migration.
 
+If we check the database, there are two tables. The first one is `AppUser` for the entity, and the second one is `flyway_schema_history` containing the migration data.
 
+### Creating next migration
 
+Now, we can create next migration. Lets add a new entity `Url` with its column and also a 1:N relation between `AppUser` and `Entity`.
 
+```java
+// ...
+@Getter
+@Setter
+@Entity
+public class Url {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
 
+    @Column(nullable = false, length = 2048)
+    private String address;
 
+    @ManyToOne
+    @JoinColumn(name = "app_user_id", foreignKey = @ForeignKey(name = "fk_url_app_user"))
+    private AppUser appUser;
+}
+```
 
+Now, we can again create a new migration using the procedure described above.&#x20;
 
+{% hint style="info" %}
+It is expected that the database is up-to-date when the migration is created!
 
+Remember, that the migration is generated with respect to the current database state.
+{% endhint %}
 
+The content of newly generated file `V2__create_Url.sql` is adding the table and also the reference:
 
+```sql
+CREATE TABLE url
+(
+    id          INT AUTO_INCREMENT NOT NULL,
+    address     VARCHAR(2048)      NOT NULL,
+    app_user_id INT                NULL,
+    CONSTRAINT pk_url PRIMARY KEY (id)
+);
 
+ALTER TABLE url
+    ADD CONSTRAINT FK_URL_APP_USER FOREIGN KEY (app_user_id) REFERENCES app_user (id);
+```
 
+### More details
 
+As you can see, the migrations are done by applying a SQL script on the database. You are free to adjust the migration script. This feature is typically used when there are column changes in the database and you need to preserve the existing data. In this case you can define how the new column is created and how are the data transfered from the old column(s) into the new one(s).
 
+To see the more complex usage, you can follow the documentation or IDEA tutorials.
 
-
-
-
-
-
+{% embed url="https://www.jetbrains.com/help/idea/flyway.html" %}
+Flyway in IDEA - more detailed usage description
+{% endembed %}
 
 ## Sidenotes
 
@@ -632,8 +870,8 @@ There are several ways, how the uniqueness of the primary key (PK) can be handle
   * AUTO - JPA will determine the appropriate mechanism from the three above on its own.
 * UUID/GUID - a primary key will be represented by a random (or partially random) 128bit long sequence of bytes. It may be generated by a programmer and provided on persist operation, or generated by a database and returned as a primary key. The way how the value is generated is trying to ensure that there are no conflicts between randomly generated primary keys. This approach is typically used in distributed environment.
 * A programmer will provide a primary key
-  * Data-related primary key - this approach is typically used when the primary key is not represented by a numerical sequence, but is related to a data (production number, insurance number, etc.) In this case, the value of the primary key is defined by the stored data.&#x20;
-  * Numerical-sequence primary key - this approach means that a programmer must provide the primary key value and ensure its uniqueness. This is typcially related to some significant performance loss caused by table lock handling and is not recommended.&#x20;
+  * Data-related primary key - this approach is typically used when the primary key is not represented by a numerical sequence, but is related to a data (production number, insurance number, etc.) In this case, the value of the primary key is defined by the stored data.
+  * Numerical-sequence primary key - this approach means that a programmer must provide the primary key value and ensure its uniqueness. This is typcially related to some significant performance loss caused by table lock handling and is not recommended.
 
 A non-data related primary key is a preferred approach, because:
 
@@ -707,7 +945,7 @@ Now, you should be able to connect to the `DATABASE_NAME` with username `USERNAM
 
 ### Checking arguments - ArgVal class
 
-It is important to check the arguments of the functions - at least for the public ones, as you must ensure that there is no nonsense incoming into the function.&#x20;
+It is important to check the arguments of the functions - at least for the public ones, as you must ensure that there is no nonsense incoming into the function.
 
 Typically, you check those arguments at the beginning of the function using a sequence of `if` conditions followed by `throw` statements with the exception data. As `if` statements typically multiline, the code of the function easily became long, especially for more complex checks:
 
@@ -862,4 +1100,3 @@ However, to use this annotation, you need to add additional dependency to `pom.x
 {% embed url="https://www.baeldung.com/jetbrains-contract-annotation" %}
 Java @Contract explanation in more detail
 {% endembed %}
-
