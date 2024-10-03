@@ -466,6 +466,146 @@ TODO
 
 TODO
 
+## Database Migrations
+
+In the context of applicaition development, database migration is the process of evolving your database schema in a controlled, versioned manner. Just like versioning code, database versioning involves keeping track of changes made to the database structure (schema) over time, ensuring that your development, testing, and production environments stay in sync.
+
+Typically, each change to the database schema (like adding a column, modifying a table, or creating an index) is written as a migration script. These scripts are assigned a version number (e.g., `V1__Create_User_Table.sql`, `V2__Add_Email_To_User.sql`), allowing the system to track which migrations have been applied. As the application evolves, new migration scripts are added. When the application is deployed, the migration tool automatically applies any new changes (if necessary) to bring the database to the latest version. This ensures that your database schema is always compatible with your application code. Also, many migration tools also provide a way to rollback migrations in case an error is found. This can revert the database to a previous version.
+
+In the Java and Spring Boot ecosystem, two primary tools are commonly used for database migration and versioning: _Flyway_ and _Liquibase_. Both tools are well-integrated with Spring Boot and provide features to manage database schema changes efficiently.
+
+In this tutorial, we will work with _Flyway_.
+
+{% hint style="info" %}
+Flyway is typically closely connected and related to another common JPA support addon in Idea - _Jpa Buddy_. Also, lot of tutorials show database migration based on Flywy and JPA Buddy.&#x20;
+
+Unfortunately, up to today (2024-10-03) JPA Buddy has a bug causing crash on many IDEA instalations. So, in this tutorial, we will use direct IDEA support for Flyway and database migrations.
+{% endhint %}
+
+{% embed url="https://www.red-gate.com/products/flyway/community/" %}
+Flyway website
+{% endembed %}
+
+{% embed url="https://jpa-buddy.com/" %}
+JPA Buddy website
+{% endembed %}
+
+### Adding Flyway support to IDEA
+
+Idea in Ultimate edition has already installed _Flyway_ plugin already. Check if the plugin is among your active plugins, or install it if necessary.
+
+TODO !\[Flyway plugin in IDEA]\(imgs/idea-flyway.png)
+
+### Adding Flyway support to the project
+
+Initially, you need to add required dependencies into the Maven (`pom.xml`):
+
+```xml
+<!-- core functionality -->
+<dependency>
+    <groupId>org.flywaydb</groupId>
+    <artifactId>flyway-core</artifactId>
+</dependency>
+<!-- database-server-specific dependency -->
+<dependency>
+    <groupId>org.flywaydb</groupId>
+    <artifactId>flyway-mysql</artifactId>
+</dependency>
+```
+
+Note that the first dependency is no related to the selected database server. Otherwise, the second dependency is database specific and needs to be adjusted for the selected database. As _MariaDB_ is a fork of _MySQL_ database, it uses the same dependecy here.
+
+### Project preparation
+
+Create a new SpringBoot project with dependencies:
+
+* Lombok
+* Spring Data JPA
+* MariaDB Driver
+* Flyway Migrations
+
+What is new in the created project is a new folder structure at `src/java/main/resources/db/migrations`. The migrations SQL scrips will be stored here.
+
+Next, set up the configration in `application.properties` file:
+
+{% code lineNumbers="true" %}
+```properties
+spring.application.name=FavUrlMigrationsDemo
+
+# JPA properties
+spring.datasource.url=jdbc:mariadb://localhost:3306/FavUrlsMigrations
+spring.datasource.username=root
+spring.datasource.password=sa
+spring.datasource.driver-class-name=org.mariadb.jdbc.Driver
+spring.jpa.hibernate.ddl-auto=none
+
+# Flyway properties
+spring.flyway.baseline-on-migrate=true
+spring.flyway.locations=classpath:db/migration
+```
+{% endcode %}
+
+Note here that we **disabled JPA database re-creation on startup** at line 8. The Flyway mechanism itself will care for the database state.
+
+Now, create a new database called `FavUrlsMigrations` and create IDEA database connection to this DB.
+
+{% hint style="info" %}
+Note: As the database is empty at the beginning, there is no need to create specific initial migration script.
+
+However, for non-empty database right now you should do the initial Flyway migration.
+{% endhint %}
+
+### Create a migration
+
+Firstly, lets create a simple entity in the code (simiarly to the previous context):
+
+```java
+// ...
+
+@Getter
+@Setter
+@Entity
+public class AppUser {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+    private String email;
+    private String passwordHash;
+}
+```
+
+Now, we can create a first migration - from the empty state to the state with respect to the current entities defined in our project.
+
+Open the context menu over IDEA database connection and select TODO
+
+TODO
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## Sidenotes
 
 ### Automatic primary keys
