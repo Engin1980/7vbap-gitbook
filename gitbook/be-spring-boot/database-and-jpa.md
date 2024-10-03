@@ -407,7 +407,7 @@ import cz.osu.vbap.favUrls.model.entities.AppUser;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface AppUserRepository extends JpaRepository<AppUser, Integer> {
-    Optional<AppUser> getByEmail();
+    Optional<AppUser> getByEmail(String email);
 }
 ```
 
@@ -444,6 +444,8 @@ Note that before was mandatory to append `@Repository` annotation. Now, it is ad
 
 You can specify additional custom query methods into the interfaces when needed - like `getByEmail()` in `AppUserRepository`. For those methods, you can use specific JPA-query-language JPQL to specify the query request.
 
+TODO: Quering explanation and more examples will be added in the future.
+
 {% embed url="https://www.baeldung.com/spring-data-jpa-query" %}
 Introduction to custom JPA queries
 {% endembed %}
@@ -456,11 +458,82 @@ Exhaustive explanation of JPA query methods
 Exhaustive explanation of JPA query methods using JPQL
 {% endembed %}
 
-## Testing
+## Adding data on app startup
 
-### Using CommandRunner
+To add data on app startup, you can use _CommandLineRunner_.&#x20;
 
-TODO
+A `CommandLineRunner` is a functional interface used to run a block of code at the application startup, after the Spring application context has been initialized. It is often used for tasks like executing some startup logic, initializing resources, or running database checks when the application starts.
+
+A `CommandLineRunner` instance returns **a function (!)** invoked when the app is started. To invoke the instance on startup, its declared as a `@Bean`. Also, you can use Dependency Injection (DI) in arguments.
+
+The following example will create an `initDatabase()` runner, which will fill the database with some initial data.
+
+{% code lineNumbers="true" %}
+```java
+package cz.osu.vbap.favUrls;
+
+import cz.osu.vbap.favUrls.model.entities.AppUser;
+import cz.osu.vbap.favUrls.model.entities.Tag;
+import cz.osu.vbap.favUrls.model.entities.Url;
+import cz.osu.vbap.favUrls.model.repositories.AppUserRepository;
+import cz.osu.vbap.favUrls.model.repositories.TagRepository;
+import cz.osu.vbap.favUrls.model.repositories.UrlRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+
+@SpringBootApplication
+public class FavUrlsApplication {
+
+  public static void main(String[] args) {
+    SpringApplication.run(FavUrlsApplication.class, args);
+  }
+
+
+  /**
+   * Initializes the database with sample data.
+   *
+   * @param appUserRepository the repository for managing `AppUser` entities
+   * @param tagRepository the repository for managing `Tag` entities
+   * @param urlRepository the repository for managing `Url` entities
+   * @return a `CommandLineRunner` that initializes the database
+   */
+  @Bean
+  public CommandLineRunner initDatabase(
+          @Autowired AppUserRepository appUserRepository,
+          @Autowired TagRepository tagRepository,
+          @Autowired UrlRepository urlRepository) {
+    return _ -> {
+    
+      if (appUserRepository.findByEmail("marek.vajgl@osu.cz").isPresent())
+        return; // data already exist
+    
+      AppUser user = new AppUser("marek.vajgl@osu.cz");
+      appUserRepository.save(user);
+
+      Tag privateTag = new Tag(user, "private", "F00");
+      tagRepository.save(privateTag);
+
+      Tag publicTag = new Tag(user, "public", "0F0");
+      tagRepository.save(publicTag);
+
+      Url url = new Url(user, "OU", "https://www.osu.cz", privateTag, publicTag);
+      urlRepository.save(url);
+    };
+  }
+}
+
+```
+{% endcode %}
+
+You can see:
+
+* Existing repository instances will be automatically added when `initDatabase()` is invoked. Its the responsibility of SpringBoot, as those arguments are annotated with `@Autoired` - lines 33-35.
+* The function is annotated with `@Bean`; otherwise, the code will not be executed - line 31.
+* The `initDatabase()` method returns a lamba expression - a reference to another anonymous metod - see the `return _ -> {};` statement at lines 36 to 52.
+* The inner anonymous method will do the database initialization.
 
 ### Using Unit Tests
 
