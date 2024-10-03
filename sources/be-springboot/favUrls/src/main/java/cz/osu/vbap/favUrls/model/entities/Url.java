@@ -37,7 +37,7 @@ public class Url {
   public Url(AppUser user, String title, String address, Tag... tags) {
     ArgVal.notNull(user, "user");
     ArgVal.notWhitespace(title, "title");
-    ArgVal.isTrue(() -> title.length() <= 256, "title must be at most 256 characters");
+    ArgVal.isTrue(() -> title.length() <= 256, "Title must have 256 characters at most.");
     ArgVal.notWhitespace(address, "address");
 
     this.user = user;

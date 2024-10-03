@@ -494,7 +494,7 @@ JPA Buddy website
 
 Idea in Ultimate edition has already installed _Flyway_ plugin already. Check if the plugin is among your active plugins, or install it if necessary.
 
-TODO !\[Flyway plugin in IDEA]\(imgs/idea-flyway.png)
+![Flyway plugin in IDEA](imgs/idea-flyway.png)
 
 ### Adding Flyway support to the project
 
@@ -576,9 +576,22 @@ public class AppUser {
 
 Now, we can create a first migration - from the empty state to the state with respect to the current entities defined in our project.
 
-Open the context menu over IDEA database connection and select TODO
+Open the context menu over IDEA database connection and select *Create Flyway Migration...*:
 
-TODO
+![Creation of the new migration in IDEA](imgs/idea-create-migration-I.png)
+
+The new window will appear with the source and target definition. As a source (the required state) we address the current entities definitions in the project (set by default). As a target (current state of the model) we address a current database state, which is now empty (set by defualt). Then we confirm the dialog.
+
+![Initial migration dialog in IDEA](imgs/idea-create-migration-II.png)
+
+A new window - Migration Preview Window - will appear. Here we check the correctness of the generated SQL script and **set the migration name**. Then name should contain the version number (generated automatically) and a description of the migration operation:
+
+![Migration Preview Window](imgs/idea-create-migration-III.png)
+
+Once confirmed, there will be a new file in the `.../db/migrations` folder.
+
+## Applying the migration
+
 
 
 

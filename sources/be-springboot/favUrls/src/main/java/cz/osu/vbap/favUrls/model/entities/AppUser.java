@@ -15,7 +15,7 @@ public class AppUser {
   @Id
   @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
   private int appUserId;
-  @Column(unique = true, nullable = false)
+  @Column(unique = true, nullable = false, length = 64)
   private String email;
   private String passwordHash;
 
@@ -28,7 +28,6 @@ public class AppUser {
   @Contract(pure = true)
   public AppUser(@NonNull String email) {
     ArgVal.matchRegex(email, ".+@.+", "email");
-
     this.email = email;
   }
 
