@@ -34,6 +34,10 @@ public class FavUrlsApplication {
           @Autowired TagRepository tagRepository,
           @Autowired UrlRepository urlRepository) {
     return _ -> {
+
+      if (appUserRepository.findByEmail("marek.vajgl@osu.cz").isPresent())
+        return; // data already exist
+
       AppUser user = new AppUser("marek.vajgl@osu.cz");
       appUserRepository.save(user);
 

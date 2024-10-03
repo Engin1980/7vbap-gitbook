@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest()
 @TestPropertySource(locations =
-        {"classpath:application.properties", "classpath:test.properties"}) //;classpath:test.properties")
+        {"classpath:application.properties", "classpath:test.properties"})
 public class AppUserTest {
 
   @Value("${spring.datasource.url}")
@@ -26,6 +26,7 @@ public class AppUserTest {
 
   @Test
   void targetDbTest(){
+    // only for demonstration purposes
     System.out.println("DB URL: " + dbUrl);
   }
 
@@ -41,6 +42,7 @@ public class AppUserTest {
     AppUser c = new AppUser("jane.doe@osu.cz");
     try {
       appUserRepository.save(c);
+      fail("Duplicate email should not be saved");
     } catch (DataIntegrityViolationException ex) {
       assertTrue(ex.getMessage().toLowerCase().contains("duplicate"));
       assertTrue(ex.getMessage().toLowerCase().contains("jane.doe@osu.cz"));
@@ -56,6 +58,6 @@ public class AppUserTest {
 
     Optional<AppUser> oa = appUserRepository.findById(aId);
     assertTrue(oa.isPresent());
-    assertEquals(oa.get().getEmail(), "MIKE.WHITE@OSU.CZ".toLowerCase());
+    assertEquals(oa.get().getEmail(), email.toLowerCase());
   }
 }
