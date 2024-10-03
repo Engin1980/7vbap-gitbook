@@ -396,9 +396,128 @@ Unfortunately, this annotation is not a part of common JPA libraries. To use it,
 </dependency>
 ```
 
+### Entity Token
+
+Now, we create an entity used to store refresh and password-reset tokens.
+
+{% code lineNumbers="true" %}
+```java
+package cz.osu.vbap.favUrls.model.entities;
+
+import cz.osu.vbap.favUrls.lib.ArgVal;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.jetbrains.annotations.Contract;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Getter
+@Setter
+@NoArgsConstructor
+@Table(uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"app_user_id", "type"}, name = "UQ_token_app_user_type")
+})
+public class Token {
+
+  @Getter
+  @AllArgsConstructor
+  public enum Type {
+    REFRESH('R'), PASSWORD_RESET('P');
+    private final char code;
+  }
+
+  @Id
+  @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
+  private int tokenId;
+  @Column(unique = true, nullable = false)
+  private String value;
+  @Column(nullable = false)
+  private LocalDateTime createdAt;
+
+  @Column(nullable = false)
+  private Type type;
+
+  @ManyToOne
+  @JoinColumn(name = "app_user_id", foreignKey = @ForeignKey(name = "FK_token_app_user"))
+  private AppUser appUser;
+
+  @Contract(pure = true)
+  public Token(AppUser appUser, Type type, String value) {
+    ArgVal.notNull(appUser, "appUser");
+    ArgVal.notNull(type, "type");
+    ArgVal.notWhitespace(value, "value");
+
+    this.type = type;
+    this.value = value;
+    this.createdAt = LocalDateTime.now();
+    this.appUser = appUser;
+  }
+}
+
+```
+{% endcode %}
+
+Entity is a bit more complicated. Except already known stuff, we have here:
+
+* It contains inner enum type `Type` distinguishing between refresh or password-reset tokens. Every value of this enum can be transformed into a char - lines 22-27.
+* Forced uniqueness of tuple of attributes `appUser` and `type`. That means only one combination for an user and a type is allowed. As this is complex unique constraint, it must be defined over the table (instead of a column) - lines 17-19.
+
+Moeover, we need to define how `Token.Type` will be stored (JPA has by default no idea how to store an enum). There are several options:
+
+{% embed url="https://www.baeldung.com/jpa-persisting-enums-in-jpa" %}
+How to work with enum in JPA
+{% endembed %}
+
+We will write a custom converter named `TokenTypeConverter` placed at `.../model/converters`:
+
+{% code lineNumbers="true" %}
+```java
+package cz.osu.vbap.favUrls.model.converters;
+
+import cz.osu.vbap.favUrls.model.entities.Token;
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
+
+import java.util.Arrays;
+
+@Converter(autoApply = true)
+public class TokenTypeConverter
+        implements AttributeConverter<Token.Type, Character> {
+  @Override
+  public Character convertToDatabaseColumn(Token.Type type) {
+    Character ret = type == null ? null : type.getCode();
+    return ret;
+  }
+
+  @Override
+  public Token.Type convertToEntityAttribute(Character character) {
+    Token.Type ret;
+    if (character == null)
+      ret = null;
+    else
+      ret = Arrays.stream(Token.Type.values())
+              .filter(t -> t.getCode() == character)
+              .findFirst()
+              .orElseThrow(() -> new IllegalArgumentException("Unknown token type: " + character));
+    return ret;
+  }
+}
+```
+{% endcode %}
+
+Converter is pretty straighforward:
+
+* Forward conversion is simple
+* Backward conversion tries to extrac the correct enum value from char based on token values using collection lambda.&#x20;
+* The attribute value `autoApply=true` tells JPA to use this converter everytime it meets with `Token.Type` datatype - line 9.
+
 ## Creating Repositories
 
-JPA based repositories inherits from the interface `JpaRepository` with two generic arguments. The first one is the entity type, the second is the type of the primary key. So, in our case, we can simply create three repository interfaces:
+JPA based repositories inherits from the interface `JpaRepository` with two generic arguments. The first one is the entity type, the second is the type of the primary key. So, in our case, we can simply create all repository interfaces:
 
 ```java
 package cz.osu.vbap.favUrls.model.repositories;
@@ -432,6 +551,21 @@ import cz.osu.vbap.favUrls.model.entities.Tag;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TagRepository extends JpaRepository<Tag, Integer> {}
+```
+
+```java
+package cz.osu.vbap.favUrls.model.repositories;
+
+import cz.osu.vbap.favUrls.model.entities.AppUser;
+import cz.osu.vbap.favUrls.model.entities.Token;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
+public interface TokenRepository extends JpaRepository<Token, Integer> {
+  Optional<Token> findByAppUserAndType(AppUser appUser, Token.Type type);
+  Optional<Token> findByValue(String value);
+}
 ```
 
 {% hint style="info" %}

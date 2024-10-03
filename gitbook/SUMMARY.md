@@ -1,6 +1,6 @@
 # Table of contents
 
-* [Page](README.md)
+* [Introduction & Motivation](README.md)
 
 ## BE - Spring Boot
 
