@@ -2,6 +2,7 @@ package cz.osu.vbap.favUrls.services;
 
 import cz.osu.vbap.favUrls.lib.ArgVal;
 import cz.osu.vbap.favUrls.services.exceptions.InternalException;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,5 +32,6 @@ public abstract class AppService {
     return ret;
   }
 
+  @Getter
   protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 }
