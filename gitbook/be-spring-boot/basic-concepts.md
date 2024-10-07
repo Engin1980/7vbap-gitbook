@@ -379,41 +379,79 @@ In Spring Boot, a **repository** is a class or interface responsible for handlin
 
 Note, that every repository is automatically annotated with `@Repository` tag. Similarly to services, this tag ensures that the repository can be injected using **dependency injection** (see below).
 
-### Dependency Injection
+## Dependency Injection
 
-D**ependency injection** is a design pattern used to achieve **Inversion of Control (IoC)**, which means that the responsibility of managing object creation and their dependencies is transferred to the underlying framework instead of being handled manually within the code. This helps to decouple different components of the application, making it more modular, easier to test, and maintain. Simply say, a programmer is not calling a constructor of a class, but the instance is somehow provided to him/her, already constructed.
+D**ependency injection (DI)** is a design pattern used to achieve **Inversion of Control (IoC)**, which means that the responsibility of managing object creation and their dependencies is transferred to the underlying framework instead of being handled manually within the code. This helps to decouple different components of the application, making it more modular, easier to test, and maintain. Simply say, a programmer is not calling a constructor of a class, but the instance is somehow provided to him/her, already constructed.
 
 When dependency injection is used, objects (dependencies) are injected into the classes that need them, typically through _constructors_, _setter methods_, or _directly into fields_. Spring Boot manages the lifecycle of these objects (also known as beans) and injects them where needed.
 
-When a class (let's call it a **service**) requires another object (say, a **repository**) to function, instead of creating that object manually inside the class, you declare the dependency in the constructor or as a field, and Spring will automatically inject the required instance at runtime. Spring scans the application for components marked with annotations like `@Service`, `@Component`, `@Repository`, etc., and creates the necessary objects (beans) to inject where needed.
+When a class (let's call it a **service**) requires another object (say, a **repository**) to function, instead of creating that object manually inside the class, you declare the dependency in the constructor or as a field, and Spring will automatically inject the required instance at runtime. Spring scans the application for components marked with annotations:
+
+* `@Service`, `@Component`, `@Repository` as **class** annotations, or
+* `@Bean` as a **method** annotation inside of class marked with `@Configuration`, `@SpringBootApplication`, `@Component`, `@Service`, `@Repository`and some other.
+
+From those annotations, Spring Boot creates the necessary objects (beans) to inject where needed.
+
+Simple example follows:
+
+```java
+@Service
+public class MyService {
+  // ...
+}
+```
+
+```java
+@Configuration
+public class Config{
+  @Bean
+  public PasswordManager passwordManager() {
+    // ...
+  }
+}
+```
+
+```java
+@RestController
+public class Controller{
+  @Autowired private MyService myService;
+  @Autowired private PasswordManager passwordManager;
+}
+```
+
+The first code listing shows how a class `MyService` is annotated. From now, it will be available via DI.
+
+The second code listing shows how a bean of type `PasswordManager` is provided. From now, it will be available via DI.
+
+The last code listing shows how the values are injected into private fields of another class.&#x20;
+
+{% hint style="info" %}
+`@Autowired` tells the enviroment to fill in the instance. There are three options to use:
+
+* Join `@Autowired` with setter - generally not recommended.
+* Join `@Autowired` with private field - as seen above. It is very easy and straighforward usage, however still the third option is preferred.
+* Join `@Autowired` with the argument of the constructor; the value is the injected directly into the constructor, and is later stored in a private field. Although this option is more verbose,  it is preferred.
+{% endhint %}
+
+## RestController
+
+## DTO - Data Transfer Object
 
 TODO
 
-### RestController
-
-### DTO - Data Transfer Object
-
-## Services management
+## Basic Concepts in Action
 
 todo
 
-### Service exceptions
-
-TODO
-
-### Base service
+### Repository
 
 todo
 
-### URL Service - prototype
-
-## REST API
-
-### Exception handling
+### Service
 
 todo
 
-### URL REST API - prototype
+### REST API Controller
 
 todo
 
