@@ -437,7 +437,166 @@ The last code listing shows how the values are injected into private fields of a
 
 ## DTO - Data Transfer Object
 
-TODO
+A **Data Transfer Object (DTO)** is a design pattern used to transfer data between different layers of an application, such as between the client and server or between different system modules. The DTO's primary role is to encapsulate and transfer data without exposing the internal details of the application's entities or models. DTOs are usually simple objects that only contain data, typically structured with getters and setters, without any business logic. By using DTOs, you can decouple domain models from the data being transferred, which keeps the presentation layer separate from underlying data structures or the database schema.
+
+In addition to separating concerns, DTOs are often used to optimize data transfer by allowing developers to select only the fields necessary for a particular operation, which reduces the amount of data transmitted. This can improve performance by preventing the transfer of unnecessary or sensitive information, while also providing a security advantage by controlling which parts of the internal data are exposed.
+
+In our project, we will use DTOs to transfer the data between Spring Boot backend and the front end part of the project. So, at the BE, we will convert the entity data into the DTO to transfer them to FE.
+
+As DTO class has typically very similar structure as Entity, it is advantegous to use some kind of automatic mechanism controlling the conversion instead of writing a custom one. Such techniques are called _object mapping_.
+
+There are several tools available for the object mapping, we will use **Object Mapper**.
+
+### Configuring the Object Mapper
+
+Firstly, we need to add a required dependency for _Object Mapper_ into the `pom.xml` file:
+
+```xml
+<!-- for simple transformation between objects -->
+<dependency>
+  <groupId>org.modelmapper</groupId>
+  <artifactId>modelmapper</artifactId>
+  <version>3.2.0</version>
+</dependency>
+```
+
+### Simple object mapping
+
+Imagine we have two similar classes - one entity and one transfering class:
+
+{% tabs %}
+{% tab title="AppUser (Entity)" %}
+```java
+@Entity
+public class AppUser {
+  @Id
+  private int appUserId;
+  private String email;
+  private String passwordHash;
+  private boolean active;
+}
+```
+
+
+{% endtab %}
+
+{% tab title="AppUserView (DTO)" %}
+```java
+@Data
+public class AppUserView {
+  private int appUserId;
+  private String email;
+  private boolean active;
+}
+```
+
+Note the Lombok `@Data` annotation.
+{% endtab %}
+{% endtabs %}
+
+We need to do a simple "copy" of the data in entity into the DTO. To do so, we will use _Object Mapper_:
+
+```java
+public static AppUserView convert(AppUser appUser) {
+  ObjectMapper mapper = new ObjectMapper();
+  AppUserView ret = mapper.convertValue(appUser, AppUserView.class);
+  return ret;
+}
+```
+
+The code is simple. Firstly we create a new instance of `ObjectMapper`. Then, we invoke a simple  method `convertValue` with first argument as a source, and second argument as a target class.&#x20;
+
+### Custom mapping handling
+
+In many cases, there can be an issue with the simple copy of property from the source into the target. For example:
+
+* If the source entity contains fields, which should not be included in the target DTO.
+* If the source entity contains another entity (or a list of other entities), which needs to use their own custom mapping to respective DTOs.
+
+To do so, we need to define that some source fields should be ignored and map them manually later.
+
+For example, lets extend the previous Entity class:
+
+```java
+@Entity
+public class AppUser {
+  // ...
+  @OneToMany(mappedBy = "appUser", fetch = FetchType.LAZY)
+  private Set<Token> tokens = new HashSet<>();
+}
+```
+
+Now, the mapping will try to map `tokens` into the target DTO. So, we need to specify to ignore `tokens` field. To do so, additional class must be created - the purpose of this class is only to have an annotation specifying the behavior; it will have no meaningful content. This class is called _a mixin_:
+
+```java
+@JsonIgnoreProperties({"tokens"})
+static class AppUserMixIn{}
+```
+
+This mixin defines that "tokens" field/variable should be ignored during the mapping. How, we have to specify the mixin usage during the mapping:
+
+{% code lineNumbers="true" %}
+```java
+public static AppUserView convert(AppUser appUser) {
+  ObjectMapper mapper = new ObjectMapper();
+  mapper.addMixIn(AppUser.class, AppUserMixIn.class);
+  AppUserView ret = mapper.convertValue(appUser, AppUserView.class);
+  return ret;
+}
+```
+{% endcode %}
+
+Note the order of the parameters at line 3 is important:
+
+* The first parameter defines the relative class - `AppUser` entity in our example.
+* The second parameter defines the mixin class with additional annotation - `AppUserMixIn`.
+
+With a simple templating, we can build all the DTOs to have the same similar behavior, like:
+
+{% code lineNumbers="true" %}
+```java
+// ...
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import cz.osu.eng.taskGrading.model.entities.AppUser;
+import lombok.Data;
+import java.util.List;
+
+@Data
+public class AppUserView {
+
+  @JsonIgnoreProperties({"tokens"})
+  static class MixIn{
+  }
+
+  public static AppUserView from(AppUser appUser) {
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.addMixIn(AppUser.class, MixIn.class);
+    AppUserView ret = mapper.convertValue(appUser, AppUserView.class);
+    ret.tokens = appUser.getTokens().stream()
+      .filter(q -> TokenView.from(q))
+      .toList();
+    return ret;
+  }
+
+  private int appUserId;
+  private String email;
+  private boolean isActive;
+  private List<TokenView> tokens;
+}
+```
+{% endcode %}
+
+In this case, we have merged everything related into the `AppUserView` - our DTO class.
+
+We:
+
+* define the mixin class - lines 13-15,
+* add mixin class to the mapper - line 19,
+* do the mapping (skippnig `tokens`) - line 20,
+* do the custom mapping for tokens (expecting that `Token` is another entity and `TokenView` is its DTO wit the same behavior).
 
 ## Basic Concepts in Action
 
