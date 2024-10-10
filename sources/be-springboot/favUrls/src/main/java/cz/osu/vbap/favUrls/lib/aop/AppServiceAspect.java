@@ -36,4 +36,15 @@ public class AppServiceAspect {
     String methodArgs = Arrays.toString(joinPoint.getArgs());
     logger.info("AOP:: {}.{}() completed with arguments: {} and result: {}", className, methodName, methodArgs, result);
   }
+
+  @AfterThrowing(pointcut = "appServiceMethods()", throwing = "exception")
+  public void logAfterThrowing(JoinPoint joinPoint, Throwable exception) {
+    AppService service = (AppService) joinPoint.getTarget();
+    Logger logger = service.getLogger();
+
+    String className = joinPoint.getTarget().getClass().getSimpleName();
+    String methodName = joinPoint.getSignature().getName();
+    String methodArgs = Arrays.toString(joinPoint.getArgs());
+    logger.error("AOP-C:: {}.{}() failed with arguments: {}", className, methodName, methodArgs, exception);
+  }
 }

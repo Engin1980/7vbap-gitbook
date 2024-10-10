@@ -4,7 +4,7 @@ import cz.osu.vbap.favUrls.services.AppService;
 import lombok.Getter;
 
 @Getter
-public class AppServiceException extends Exception {
+public abstract class AppServiceException extends Exception {
   private final AppService source;
 
   public AppServiceException(AppService source, String message) {
