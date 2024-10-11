@@ -16,7 +16,7 @@
 
 ## FE - React
 
-* [Page 3](fe-react/page-3.md)
+* [Project creation](fe-react/page-3.md)
 
 ## FE - Angular
 
