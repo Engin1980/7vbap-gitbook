@@ -1074,7 +1074,7 @@ select password('USERNAME');
 8. Now, create a new database using SQL:
 
 ```sql
-create table DATABASE_NAME;
+create database DATABASE_NAME;
 ```
 
 9. Finally, grand access rights to the database for your user:
@@ -1247,4 +1247,84 @@ However, to use this annotation, you need to add additional dependency to `pom.x
 
 {% embed url="https://www.baeldung.com/jetbrains-contract-annotation" %}
 Java @Contract explanation in more detail
+{% endembed %}
+
+### Custom Converters (storing Enum)
+
+Sometimes, you have your custom type you would like to be stored in a single column. The type may be more complex (like GPS coordinate stored as `latitude;longitude` string, but this approach is also very common for enum types. In this case, JPA has no clue how to save the type instance into the db column or vice versa. There, you need _AttributeConveters_.
+
+An **attribute conveter** is a class defining how a custom entity type is converted into a database column and back. It uses two methods, `convertToDatabaseColumn(...)` and the opposite one, `convertToEntityAttribute(..)`.
+
+**Example**
+
+Imagine a simple enum:
+
+```java
+public enum Genre {
+  TRANCE,
+  HOUSE,
+  TECHNO
+}
+```
+
+And the entity using it:
+
+```java
+@Entity
+public class Track{
+  @Id private int Id;
+  private String title;
+  private Genre genre;
+}
+```
+
+Here, by default, JPA has no idea how to store `Genre` type.&#x20;
+
+The easiest way is to mark the enum attribute with `@Enumerate` attribute:
+
+```java
+// ...
+@Enumerated(EnumType.ORDINAL)  // or STRING
+private Genre genre;
+// ...
+```
+
+Using this annotation, the enum will be stored as integer ordinal, or a string value. However, lets store it by its first three characters. Let's create a class:
+
+{% code lineNumbers="true" %}
+```java
+@Converter(autoApply = true)
+public class GenreConverter implements AttributeConverter<Genre, String> {
+ 
+    @Override
+    public String convertToDatabaseColumn(Genre genre) {
+        if (category == null) {
+            return null;
+        }
+        return category.substring(0,3);
+    }
+
+    @Override
+    public Genre convertToEntityAttribute(String code) {
+        if (code == null) {
+            return null;
+        }
+
+        return Stream.of(Genre.values())
+          .filter(c -> c.name().substring(0,3).equals(code))
+          .findFirst()
+          .orElseThrow(IllegalArgumentException::new);
+    }
+}
+```
+{% endcode %}
+
+Here:
+
+* definition at line 1 says that this converter will be used always for type `Genre`;
+* generic arguments at the end of line 2 says that this is a definition of mapping from `Genre` into `String`;
+* and two methods define forward and inverse implementation of the conversion.
+
+{% embed url="https://www.baeldung.com/jpa-persisting-enums-in-jpa" %}
+Persisting Enums in JPA - tutorial
 {% endembed %}

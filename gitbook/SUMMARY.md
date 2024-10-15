@@ -6,7 +6,7 @@
 
 * [Project creation](be-spring-boot/project-creation.md)
 * [Database & JPA](be-spring-boot/database-and-jpa.md)
-* [Establishment of the Architecture](be-spring-boot/establishment-of-the-architecture.md)
+* [Basic concepts](be-spring-boot/basic-concepts.md)
 * [Authentication, Authorization, JWT](be-spring-boot/authentication-authorization-jwt.md)
 * [Finalization](be-spring-boot/finalization.md)
 
@@ -16,7 +16,7 @@
 
 ## FE - React
 
-* [Page 3](fe-react/page-3.md)
+* [Project creation](fe-react/page-3.md)
 
 ## FE - Angular
 
