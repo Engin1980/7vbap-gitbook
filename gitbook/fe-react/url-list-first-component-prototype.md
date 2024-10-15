@@ -1,9 +1,13 @@
 ---
-description: This page describes how a simple component displaying data can be created.
 icon: square-2
+description: This page describes how a simple component displaying data can be created.
 ---
 
 # URL list - first component prototype
+
+{% embed url="https://github.com/Engin1980/7vbap-gitbook/tree/fe-react-url-list-prototype/sources/fe-react/fav-urls" %}
+The source code related to this section
+{% endembed %}
 
 ## Theoretical Introduction
 
