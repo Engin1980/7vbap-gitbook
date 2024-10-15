@@ -49,7 +49,10 @@ public class FavUrlsApplication {
       Tag publicTag = new Tag(user, "public", "0F0");
       tagRepository.save(publicTag);
 
-      Url url = new Url(user, "OU", "https://www.osu.cz", privateTag, publicTag);
+      Url url = new Url(user, "University of Ostrava", "https://www.osu.cz", privateTag, publicTag);
+      urlRepository.save(url);
+
+      url = new Url(user, "NASA", "https://www.nasa.gov");
       urlRepository.save(url);
 
       Token token = new Token(user, Token.Type.PASSWORD_RESET, "abcde");
