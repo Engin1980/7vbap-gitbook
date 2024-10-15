@@ -1,5 +1,6 @@
 import React from 'react';
 import './App.css';
+import UrlList from "./components/url/url-list";
 
 function App() {
   return (
@@ -7,7 +8,7 @@ function App() {
       <header className="App-header">
        FAVOURITE URLs
       </header>
-      Here will be the content.
+      <UrlList />
     </div>
   );
 }
