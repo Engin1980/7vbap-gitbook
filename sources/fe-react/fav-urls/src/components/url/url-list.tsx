@@ -1,6 +1,7 @@
 import {useEffect, useState} from "react";
 import {UrlView} from "../../model/dtos/url-view";
 import axios from "axios";
+import "./url-list.css";
 
 function UrlList(){
   const [urls, setUrls] = useState<UrlView[]>([]);
