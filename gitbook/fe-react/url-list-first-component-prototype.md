@@ -3,7 +3,7 @@ icon: square-2
 description: This page describes how a simple component displaying data can be created.
 ---
 
-# URL list - first component prototype
+# Url List - first component prototype
 
 {% embed url="https://github.com/Engin1980/7vbap-gitbook/tree/fe-react-url-list-prototype/sources/fe-react/fav-urls" %}
 The source code related to this section
@@ -163,7 +163,7 @@ So, in our case, we:
 UseState hook explanation - Documentation
 {% endembed %}
 
-Fetching the data - useEffect hook
+#### Fetching the data - useEffect hook
 
 Next part is the way how the data are fetched.
 
@@ -193,6 +193,10 @@ In our case, we will:
 {% hint style="warning" %}
 Note the difference between `useEffect(..., [])` and `useEffect(...)`. The latter one defines **no** dependencies causing the `useEffect` will be invoked **every time** the component is rendered.
 {% endhint %}
+
+{% embed url="https://react.dev/reference/react/useEffect" %}
+UseEffect hook explanation - Documentation
+{% endembed %}
 
 #### Fetching the data - Axios + REST API
 
@@ -232,6 +236,10 @@ try{
 ```
 
 What is important here is that we changed from the synchronous invocation into the `async-await` asynchronou invocation. This topic is a bit complex. For now we need to know that the function wrapping the code mentioned in the previous listing must be _an asynchronous function_.
+
+{% embed url="https://axios-http.com/docs/intro" %}
+Axios - Documentation
+{% endembed %}
 
 #### Putting axios and useEffect together
 
@@ -312,27 +320,89 @@ Note that `rel="noreferrer"` should be used together with `target="_blank"` in `
 About target="\_blank"
 {% endembed %}
 
-TODO how execute and show the data
+### UrlList - adding a custom style
+
+In the code above, we have specified custom CSS classes with the elements.
+
+{% hint style="info" %}
+Note that CSS styles are assigned to the elements using `className` property, not ~~`class`~~.
+{% endhint %}
+
+We can define a CSS file valid only for a component file. Let's create a new file `url-list.css` located at the same folder as `url-list.tsx`:
+
+```css
+.urlTitle{
+    font-weight: bold;
+    font-size: large;
+    color: purple;
+}
+
+.urlRow{
+    margin-top:8px;
+    padding-top:8px;
+    padding-bottom:8px;
+}
+
+.urlRow:nth-of-type(odd) {
+    background-color: #eee;
+}
+```
+
+Now, add a reference to this style in the import section of the original `.tsx` file:
+
+```typescript
+// ....
+import "./url-list.css";
+// ...
+```
 
 
 
+## Summary
 
+The final code of the created component follows:
 
+```typescript
+import {useEffect, useState} from "react";
+import {UrlView} from "../../model/dtos/url-view";
+import axios from "axios";
+import "./url-list.css";
 
+function UrlList(){
+  const [urls, setUrls] = useState<UrlView[]>([]);
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await axios.get("http://localhost:32123/v1/url/1");
+        setUrls(res.data);
+      } catch (err) {
+        console.error(err);
+      }
+    })();
+  }, []);
 
+  return (
+    <div>
+      <h1>Your Links</h1>
+      <div>
+        {urls.map(url => (<div className="urlRow" key={url.urlId}>
+          <div className="urlTitle">{url.title}</div>
+          <div><a href={url.address} rel="noreferrer" target="_blank">{url.address}</a></div>
+        </div>))}
+      </div>
+    </div>
+  );
+}
 
+export default UrlList;
+```
 
+If the application is started, the result can be immediatelly visible in the final page.
 
+Note that to see the result, you must have your BE running. Also, change the target URL if required.
 
-
-
-
-
-
-{% embed url="https://react.dev/reference/react/useEffect" %}
-UseEffect hook explanation - Documentation
-{% endembed %}
+If data are provided by the BE, they are visible as a list in the output form. If BE is not running or some error occurs, you can see the issue in the browser's console window (typically opened by `F12` key).
 
 
 

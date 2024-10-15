@@ -28,7 +28,7 @@ TODO more structure info
 
 Then, we will directly add some libraries needed in our project realization:
 
-* **react-form-hook** for easy form validation and submitting;
+* **react-hook-form** for easy form validation and submitting;
 * **material-design-for-boostrap MDB** for predefined components and bootstrap support via components;
 * **axios** for HTTP requests;
 * **toastify** for easy toast support;
@@ -38,13 +38,17 @@ Then, we will directly add some libraries needed in our project realization:
 Run the console **in(!)** the folder of the project and execute the following:
 
 ```
-npm install react-form-hook
+npm install react-hook-form
 npm install mdb-react-ui-kit
 npm install axios
 npm install react-toastify
 npm install react-router-dom
 npm install reactjs-popup
 ```
+
+{% hint style="warning" %}
+Do not confuse `react-hook-form` with `react-form-hook`.
+{% endhint %}
 
 ### Adjust the styles
 
