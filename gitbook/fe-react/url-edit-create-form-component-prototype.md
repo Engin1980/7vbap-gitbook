@@ -277,10 +277,38 @@ Note that there are several options how data can be transferred to the server. S
 Firstly, we create `FormData` object tranfering the data. We use mock `appUserId` for the new record:
 
 ```typescript
+const appUserId = 1; // mock appUserId of an existing user
+
 const formData = new FormData();
 formData.append("address", data.address);
 formData.append("title", data.title);
 formData.append("appUserId", appUserId.toString());
+```
+
+Then we simply send the request via axios:
+
+```typescript
+axios.post("http://localhost:3000/v1/url", formData);
+```
+
+Now, lets encapsulate the code in the method and add an error handling:
+
+```typescript
+const submitHandler : SubmitHandler<Data> = async data =>{
+  const appUserId = 1; // mock appUserId of an existing user
+
+  const formData = new FormData();
+  formData.append("address", data.address);
+  formData.append("title", data.title);
+  formData.append("appUserId", appUserId.toString());
+
+  try{
+    await axios.post("http://localhost:3000/v1/url", formData);
+    console.log("Successfully stored");
+  }catch (err){
+    console.log(err);
+  }
+}
 ```
 
 
