@@ -1,8 +1,8 @@
 ---
+icon: square-3
 description: >-
   In this section, an example of a component with form and its handling will be
   shown, including data validation and error management.
-icon: square-3
 ---
 
 # Url Edit/Create - form component prototype
@@ -245,6 +245,43 @@ Here, we:
 * Add an error handling for this field - lines 12-16;
 * Do the same for address field - lines 18-28 / 29-33;
 * Create a submit button - line 35;
+
+Note that instead of typical `<input ...` elements we use material design `<MDBInput ...` counterparts.
+
+Finally, we can encapsulate the form into the bootstrap layout elements:
+
+```typescript
+  return (<div>
+    <MDBContainer>
+      <MDBRow className="justify-content-center">
+        <MDBCol md="6">
+          <form onSubmit={handleSubmit(submitHandler)}>
+            <!-- form content -->
+          </form>
+        </MDBCol>
+      </MDBRow>
+    </MDBContainer>
+  </div>);
+```
+
+### Implementing the form submission
+
+Now, we can update the content of the submitting function `handleSubmit(...)`.
+
+Firstly, we create a data that will be transfered via the HTTP request. We transfer the data via form data.
+
+{% hint style="info" %}
+Note that there are several options how data can be transferred to the server. Several options are via request payload, form data, headers, cookies. The selected technique depends on the data type, size and other requirements.
+{% endhint %}
+
+Firstly, we create `FormData` object tranfering the data. We use mock `appUserId` for the new record:
+
+```typescript
+const formData = new FormData();
+formData.append("address", data.address);
+formData.append("title", data.title);
+formData.append("appUserId", appUserId.toString());
+```
 
 
 
