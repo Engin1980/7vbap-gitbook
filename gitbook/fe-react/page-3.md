@@ -50,6 +50,14 @@ npm install reactjs-popup
 Do not confuse `react-hook-form` with `react-form-hook`.
 {% endhint %}
 
+Additional important step to support _mdb-react-ui-kit_ is to add the CSS style either into `App.tsx` or `index.tsx` to be globally available:
+
+```typescript
+// ...
+import 'mdb-react-ui-kit/dist/css/mdb.min.css';
+// ...
+```
+
 ### Adjust the styles
 
 Now, let's slightly adjust the page style. In file `src/App.css` there are styles for the whole app. We will update the definition of the header style by its replacement with:
