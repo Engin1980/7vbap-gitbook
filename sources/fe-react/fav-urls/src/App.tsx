@@ -1,10 +1,10 @@
 import React from 'react';
 import './App.css';
 import UrlList from "./components/url/url-list";
-import UrlEdit from "./components/url/url-edit";
 import 'mdb-react-ui-kit/dist/css/mdb.min.css';
 import {ToastContainer} from 'react-toastify';
 import "react-toastify/dist/ReactToastify.css";
+import 'reactjs-popup/dist/index.css';
 
 function App() {
 
@@ -24,7 +24,6 @@ function App() {
           FAVOURITE URLs
         </header>
         <UrlList/>
-        <UrlEdit/>
       </div>
     </div>
   );
