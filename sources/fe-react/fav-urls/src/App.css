@@ -39,3 +39,8 @@
     transform: rotate(360deg);
   }
 }
+
+.invalid-feedback {
+  line-height: 0.6;
+  font-size: small !important;
+}
