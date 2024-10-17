@@ -176,6 +176,14 @@ React-toastify offers several options how to adjust the toast behavior. For the 
 React-Toastify - Documentation
 {% endembed %}
 
+### Adding popup support
+
+The popups will be explained and implemented when necessary. However, for their correct display, add a mandatory css file into the imports:
+
+```typescript
+import 'reactjs-popup/dist/index.css';
+```
+
 ## Starting the application
 
 Now, start the console (PowerShell, Command line, Terminal, ...) in the project directory and start the application by running the command:

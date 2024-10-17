@@ -104,8 +104,6 @@ We will meet with its component several times. Its components starts with `<MDB.
 
 {% embed url="https://mdbootstrap.com/docs/react/" %}
 
-
-
 ## Creating an input component
 
 Let's create a new file in the project - `src/components/url/url-edit.tsx`:
@@ -335,15 +333,199 @@ try{
 
 TODO img ok toast
 
+## Form as a popup/modal
 
+Next step is to use the form as a popup based on a button click.
 
+As we need to integrate together button (to open the popup) and the popup itself, it can be benefical to do the whole stuff in one component.
 
+### Create the popup - Url-Edit-Popup.tsx
 
+So, firstly, we will move the content into the new component (or you can rename the old one into the new one) so we can distinquish from the name that we are dealing with the popup component: `url-edit-popup.tsx`.
 
+Lets start with the with some data we already know and one addition:
 
+{% code lineNumbers="true" %}
+```typescript
+import {SubmitHandler, useForm} from "react-hook-form";
+import {MDBBtn, MDBContainer, MDBInput} from "mdb-react-ui-kit";
+import axios from "axios";
+import {toast} from "react-toastify";
+import {useRef} from "react";
+import Popup from "reactjs-popup";
 
+type Data = {
+  address : string;
+  title : string;
+  appUserId : number;
+};
 
+type Params = {
+  appUserId : number;
+  refresh: () => void | undefined;
+};
 
+function UrlEditPopup(params : Params){
+  const {
+    register,
+    handleSubmit,
+    formState : {errors}
+  } = useForm<Data>();
+}
 
+export default UrlEditPopup;
+```
+{% endcode %}
 
+What has been added:
+
+* We need a smart way how to pass data to this component. We need to know I) the id of the user; II) the way how to tell the `<UrlList />` that it should reload the data from the server. So, we use the `Params` type (lines 14-16)
+  * `appUserId` is simply a numerical id of the user to whom the new/edited url will be asigned;
+  * `refresh` function callback invoked when the data has been changed and the reload is needed.
+* We add this type as a parameter of `UrlEditPopup` - line 18.
+
+Next, we need to define callback functions to open and close the popup. To do so, we will use `useRef` hook and add the necessary code into the component:
+
+```typescript
+function UrlEditPopup(params : Params){
+  // ...
+  const cbRef = useRef<any>();
+
+  const openPopup = () => cbRef.current.open();
+  const closePopup = () => cbRef.current.close();
+}
+```
+
+UseRef hook is used, when we need to keep in the component a value, that will not be used for rendering. So, its usage is very similar to `useState` except the rendering condition. It contains a single value `current`, when the current value is stored. In our case, this value will contain methods to open and close the popup. We will initialize the value later (see the HTML code), but now we use those values to define opening and closing functions.
+
+{% embed url="https://react.dev/reference/react/useRef" %}
+
+Next step is a slight adjustment of the data submitting function:
+
+{% code lineNumbers="true" %}
+```typescript
+// ...
+
+function UrlEditPopup(params : Params){
+  // ...
+
+  const submitHandler : SubmitHandler<Data> = async data =>{
+    // ...
+
+    try{
+      await axios.post("http://localhost:32123/v1/url", formData);
+      closePopup();
+      params.refresh();
+      toast.success("Link stored successfully.");
+    }catch (err){
+      console.log(err);
+      toast.error("Link stored failed.");
+    }
+  }
+}
+
+export default UrlEditPopup;
+```
+{% endcode %}
+
+Here, we have added popup close (line 11) and refresh invocation (line 12).
+
+Finally, the updated code of the HTML/JSX returned from the component:
+
+{% code lineNumbers="true" %}
+```typescript
+// ...
+
+function UrlEditPopup(params : Params){
+  // ...
+
+  return (<div>
+    <MDBBtn onClick={openPopup}>Add URL</MDBBtn>
+    <Popup ref={cbRef}>
+      <MDBContainer>
+        <h1>Edit link details</h1>
+        <form onSubmit={handleSubmit(submitHandler)}>
+        // ... form remains the same
+        </form>
+      </MDBContainer>
+    </Popup>
+  </div>);
+}
+
+export default UrlEditPopup;
+```
+{% endcode %}
+
+We have:
+
+* added a button invoking `openPopup` function - line 7
+* added a popup with the initialization of `cbRef` variable using `ref` attribute - line 7; this is the place where the value is set into the `cbRef` variable declared using `useRef` handler above;
+* added a caption (line 10) and remove bootstrap row/cols (you can adjust those to your needs); the rest of the HTML form same as in the previous version.
+
+### Update the popup display
+
+So far we were displaying the edit form in the `App.tsx` file. Firstly, lets remove `<UrlEdit />` element from there as the form will be displayed via the button on `<UrlList />` component.
+
+Secodly, lets add the component into the url list.&#x20;
+
+Firstly, we need to create a `refresh` state variable - when its value is true, the data should be refreshed:
+
+{% code lineNumbers="true" %}
+```typescript
+// ...
+
+function UrlList(){
+  const [urls, setUrls] = useState<UrlView[]>([]);
+  const [refresh, setRefresh] = useState<boolean>(true);
+  const doRefresh : () => void =  () => setRefresh(true);
+
+  useEffect(() => {
+    (async () => {
+      if (refresh){
+        setRefresh(false);
+        try {
+          const res = await axios.get("http://localhost:32123/v1/url/1");
+          setUrls(res.data);
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    })();
+  }, [refresh]);
+
+  // ...
+}
+```
+{% endcode %}
+
+We have created a `refresh`/ `setRefresh` state variable - line 5 - with default value `true` as data needs to be loaded for the first time. We have created `doRefresh` function simply changing the `refresh` value to `true`; this function will be used as the refresh callback passed into the popup. Finally, do the `refresh` value check / behavior in the component initializatio - lines 10, 11.
+
+Next part is the updated of the HTML/JSX code:
+
+{% code lineNumbers="true" %}
+```typescript
+// ...
+
+function UrlList(){
+  // ...
+
+  return (
+    <div>
+      <h1>Your Links</h1>
+      <div>
+        <UrlEditPopup appUserId={1} refresh={doRefresh} />
+        {urls.map(url => (<div className="urlRow" key={url.urlId}>
+          <div className="urlTitle">{url.title}</div>
+          <div><a href={url.address} rel="noreferrer" target="_blank">{url.address}</a></div>
+        </div>))}
+      </div>
+    </div>
+  );
+}
+```
+{% endcode %}
+
+Here, we only declare a `<UrlEditPopup ...` element (line 10). We pass the `appUserId` and `refresh` parameters to the component.
+
+TODO popup image.
 
