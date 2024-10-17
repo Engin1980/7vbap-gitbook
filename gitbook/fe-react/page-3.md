@@ -164,7 +164,7 @@ export default App;
 ```
 {% endcode %}
 
-Now, the toast will be displayed once the App component is loaded. Once tested, lines 9-11 should be removed from the code.
+Now, the toast will be displayed once the App component is loaded. Once tested, lines 9-11 should be removed from the code. You can also delete all unecessary imports (`toast` and `useEffect`).
 
 TODO image toast-demo.png
 
