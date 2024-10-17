@@ -100,6 +100,82 @@ function App() {
 export default App;
 ```
 
+### Adding toast support
+
+A **toast** in UI/UX design refers to a small, non-intrusive notification that briefly appears on the screen to provide feedback to the user, usually in response to an action. It typically disappears automatically after a few seconds.
+
+Toasts are often used for messages such as:
+
+* **Success notifications** ("Data saved successfully!")
+* **Error or warning messages** ("Unable to connect to the server.")
+* **Informative updates** ("You have 2 new messages.")
+
+They are designed to be simple, quick to read, and not require any user interaction. In mobile and web development, toasts are commonly implemented using frameworks like **Android SDK**, **Bootstrap**, or **React** libraries.
+
+To support toasts, we have added `react-toastify` dependency in our project. Now, we need to activate the behavior.
+
+As toasts should be available through the whole application, we will apply the code changes into the `App.tsx`file.
+
+Firstly, add some imports:
+
+```typescript
+import {toast, ToastContainer} from 'react-toastify';
+import "react-toastify/dist/ReactToastify.css";
+```
+
+The `ToastContiner` is used as a definition of a component/element to display the toasts. It will also define the default behavior for the toasts. The `toast` definition here will be used only for testing purposes and can be deleted later. The `css` file contains style definitions for toasts. As a next part, we will add a toast component definition into the content of the component. Also, for testing purposes we will add a `useEffect(..)` call showing a demo toast (the principle and usage of this function will be explained later):
+
+{% code lineNumbers="true" %}
+```typescript
+import React, {useEffect} from 'react';
+import './App.css';
+import 'mdb-react-ui-kit/dist/css/mdb.min.css';
+import {toast, ToastContainer} from 'react-toastify';
+import "react-toastify/dist/ReactToastify.css";
+
+function App() {
+
+  useEffect(() =>{
+    toast.success("App Started");
+  })
+
+  return (
+    <div>
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        closeOnClick
+        pauseOnFocusLoss
+        pauseOnHover
+      />
+
+      <div className="App">
+        <header className="App-header">
+          FAVOURITE URLs
+        </header>
+        Here will be the content.
+      </div>
+    </div>
+  );
+}
+
+export default App;
+```
+{% endcode %}
+
+Now, the toast will be displayed once the App component is loaded. Once tested, lines 9-11 should be removed from the code.
+
+TODO image toast-demo.png
+
+{% hint style="info" %}
+React-toastify offers several options how to adjust the toast behavior. For the more detailed configuration see examples in the documentation.
+{% endhint %}
+
+{% embed url="https://www.npmjs.com/package/react-toastify" %}
+React-Toastify - Documentation
+{% endembed %}
+
 ## Starting the application
 
 Now, start the console (PowerShell, Command line, Terminal, ...) in the project directory and start the application by running the command:
