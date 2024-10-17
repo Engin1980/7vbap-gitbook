@@ -264,6 +264,8 @@ Finally, we can encapsulate the form into the bootstrap layout elements:
   </div>);
 ```
 
+TODO img validating toast
+
 ### Implementing the form submission
 
 Now, we can update the content of the submitting function `handleSubmit(...)`.
@@ -313,7 +315,25 @@ const submitHandler : SubmitHandler<Data> = async data =>{
 
 ## Advice result using toasts
 
-At the end, let's advice the result using the toasts library added before.
+At the end, let's advice the result using the toasts library added before. We just simply add an import at the beginning of the file:
+
+```typescript
+import {toast} from "react-toastify";
+```
+
+Then, we can add a toast invocation:
+
+```typescript
+try{
+  await axios.post("http://localhost:32123/v1/url", formData);
+  toast.success("Link stored successfully.");
+}catch (err){
+  console.log(err);
+  toast.error("Link stored failed.");
+}
+```
+
+TODO img ok toast
 
 
 
