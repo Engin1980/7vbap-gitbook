@@ -20,6 +20,7 @@ function UrlCreatePopup(params : Params){
   const {
     register,
     handleSubmit,
+    reset,
     formState : {errors}
   } = useForm<Data>();
   const cbRef = useRef<any>();
@@ -38,6 +39,7 @@ function UrlCreatePopup(params : Params){
       closePopup();
       params.refresh();
       toast.success("Link stored successfully.");
+      reset();
     }catch (err){
       console.log(err);
       toast.error("Link stored failed.");
