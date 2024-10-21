@@ -1,0 +1,15 @@
+.urlTitle{
+    font-weight: bold;
+    font-size: large;
+    color: purple;
+}
+
+.urlRow{
+    margin-top:8px;
+    padding-top:8px;
+    padding-bottom:8px;
+}
+
+.urlRow:nth-of-type(odd) {
+    background-color: #eee;
+}
