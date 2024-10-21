@@ -5,9 +5,7 @@ description: >-
   shown, including data validation and error management.
 ---
 
-# Url Edit/Create - form component prototype
-
-As a next example we will create a simple component with a form/editor of URL data. The form will be the same for new and existing URL, so we will refer to it as a UrlEdit component. However, for now, only the creation will be supported.
+# Url Create - form component prototype
 
 ## Theoretical Introduction
 
@@ -35,7 +33,7 @@ To add the required behavior into the form, you have to:
 In general, we have to add a code to access form behavior and data:
 
 ```
-const { register, handleSubmit, watch, formState: { errors } } = useForm<Inputs>();
+const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<Inputs>();
 ```
 
 Here we add:
@@ -43,6 +41,7 @@ Here we add:
 * **register** to map HTML input elements to form data;
 * `handleSubmit` function managing form submission;
 * `watch` functionality to access current form values;
+* `reset` function to reset the form state;
 * `formState` object to handle primarily the issues and errors.
 
 Moreover, we define a form data type for typescript. In the code above, we need a type `Inputs` defining the data structure.
@@ -106,14 +105,14 @@ We will meet with its component several times. Its components starts with `<MDB.
 
 ## Creating an input component
 
-Let's create a new file in the project - `src/components/url/url-edit.tsx`:
+Let's create a new file in the project - `src/components/url/url-create.tsx`:
 
 ```typescript
-function UrlEdit(){
+function UrlCreate(){
   return <div></div>;
 }
 
-export default UrlEdit;
+export default UrlCreate;
 ```
 
 For immediate testing, we can add this component directly into the `App.tsx` file to extend the layout:
@@ -127,7 +126,7 @@ function App() {
        FAVOURITE URLs
       </header>
       <UrlList />
-      <UrlEdit />
+      <UrlCreate />
     </div>
   );
 }
@@ -156,11 +155,14 @@ Firstly, we will create a new type in the file containing form data:
 type Data = {
   address : string;
   title : string;
-  appUserId : number;
 };
 ```
 
-Note this type is defined **outside** of the `UrlEdit()` function.
+Note this type is defined **outside** of the `UrlCreate()` function.
+
+{% hint style="info" %}
+We are not specifying `urlId` nor `appUserId`. `UrlId` will be asigned by the database on save, `appUserId` will be provided later by the parent component. For debug purposes, we can expect this value to be `1`.
+{% endhint %}
 
 #### Declaring form data accessors
 
@@ -291,7 +293,7 @@ Then we simply send the request via axios:
 axios.post("http://localhost:32123/v1/url", formData);
 ```
 
-Now, lets encapsulate the code in the method and add an error handling:
+Now, let's encapsulate the code in the method and add an error handling:
 
 ```typescript
 const submitHandler : SubmitHandler<Data> = async data =>{
@@ -339,9 +341,9 @@ Next step is to use the form as a popup based on a button click.
 
 As we need to integrate together button (to open the popup) and the popup itself, it can be benefical to do the whole stuff in one component.
 
-### Create the popup - Url-Edit-Popup.tsx
+### Create the popup - Url-Create-Popup.tsx
 
-So, firstly, we will move the content into the new component (or you can rename the old one into the new one) so we can distinquish from the name that we are dealing with the popup component: `url-edit-popup.tsx`.
+So, firstly, we will move the content into the new component (or you can rename the old one into the new one) so we can distinquish from the name that we are dealing with the popup component: `url-create-popup.tsx`.
 
 Lets start with the with some data we already know and one addition:
 
@@ -365,10 +367,11 @@ type Params = {
   refresh: () => void | undefined;
 };
 
-function UrlEditPopup(params : Params){
+function UrlCreatePopup(params : Params){
   const {
     register,
     handleSubmit,
+    reset, // added reset functionality
     formState : {errors}
   } = useForm<Data>();
 }
@@ -382,12 +385,12 @@ What has been added:
 * We need a smart way how to pass data to this component. We need to know I) the id of the user; II) the way how to tell the `<UrlList />` that it should reload the data from the server. So, we use the `Params` type (lines 14-16)
   * `appUserId` is simply a numerical id of the user to whom the new/edited url will be asigned;
   * `refresh` function callback invoked when the data has been changed and the reload is needed.
-* We add this type as a parameter of `UrlEditPopup` - line 18.
+* We add this type as a parameter of `UrlCreatePopup` - line 18.
 
 Next, we need to define callback functions to open and close the popup. To do so, we will use `useRef` hook and add the necessary code into the component:
 
 ```typescript
-function UrlEditPopup(params : Params){
+function UrlCreatePopup(params : Params){
   // ...
   const cbRef = useRef<any>();
 
@@ -406,7 +409,7 @@ Next step is a slight adjustment of the data submitting function:
 ```typescript
 // ...
 
-function UrlEditPopup(params : Params){
+function UrlCreatePopup(params : Params){
   // ...
 
   const submitHandler : SubmitHandler<Data> = async data =>{
@@ -417,6 +420,7 @@ function UrlEditPopup(params : Params){
       closePopup();
       params.refresh();
       toast.success("Link stored successfully.");
+      reset(); // reset the form
     }catch (err){
       console.log(err);
       toast.error("Link stored failed.");
@@ -436,7 +440,7 @@ Finally, the updated code of the HTML/JSX returned from the component:
 ```typescript
 // ...
 
-function UrlEditPopup(params : Params){
+function UrlCreatePopup(params : Params){
   // ...
 
   return (<div>
@@ -464,7 +468,7 @@ We have:
 
 ### Update the popup display
 
-So far we were displaying the edit form in the `App.tsx` file. Firstly, lets remove `<UrlEdit />` element from there as the form will be displayed via the button on `<UrlList />` component.
+So far we were displaying the edit form in the `App.tsx` file. Firstly, lets remove `<UrlCreate />` element from there as the form will be displayed via the button on `<UrlList />` component.
 
 Secodly, lets add the component into the url list.&#x20;
 
@@ -513,7 +517,7 @@ function UrlList(){
     <div>
       <h1>Your Links</h1>
       <div>
-        <UrlEditPopup appUserId={1} refresh={doRefresh} />
+        <UrlCreatePopup appUserId={1} refresh={doRefresh} />
         {urls.map(url => (<div className="urlRow" key={url.urlId}>
           <div className="urlTitle">{url.title}</div>
           <div><a href={url.address} rel="noreferrer" target="_blank">{url.address}</a></div>
@@ -525,7 +529,7 @@ function UrlList(){
 ```
 {% endcode %}
 
-Here, we only declare a `<UrlEditPopup ...` element (line 10). We pass the `appUserId` and `refresh` parameters to the component.
+Here, we only declare a `<UrlCreatePopup ...` element (line 10). We pass the `appUserId` and `refresh` parameters to the component.
 
 TODO popup image.
 
