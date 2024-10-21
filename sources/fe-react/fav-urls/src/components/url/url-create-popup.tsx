@@ -8,7 +8,6 @@ import Popup from "reactjs-popup";
 type Data = {
   address : string;
   title : string;
-  appUserId : number;
 };
 
 type Params = {
