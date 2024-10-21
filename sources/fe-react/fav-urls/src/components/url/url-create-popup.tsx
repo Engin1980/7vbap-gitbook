@@ -16,7 +16,7 @@ type Params = {
   refresh : () => void;
 };
 
-function UrlEditPopup(params : Params){
+function UrlCreatePopup(params : Params){
   const {
     register,
     handleSubmit,
@@ -48,7 +48,7 @@ function UrlEditPopup(params : Params){
     <MDBBtn onClick={openPopup}>Add URL</MDBBtn>
     <Popup ref={cbRef}>
       <MDBContainer>
-            <h1>Edit link details</h1>
+            <h1>Create new link</h1>
             <form onSubmit={handleSubmit(submitHandler)}>
 
               <MDBInput
@@ -89,4 +89,4 @@ function UrlEditPopup(params : Params){
   </div>);
 }
 
-export default UrlEditPopup;
+export default UrlCreatePopup;
