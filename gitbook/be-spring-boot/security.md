@@ -206,6 +206,14 @@ From now, the app is CSRF secured. If you have not implemented the CSRF behavior
 To continue with security, we suggest firstly implement the CSRF protection at front-end, so you can validate the correct behavior. Then continue with the implementation of the next security parts.
 {% endhint %}
 
+{% embed url="https://docs.spring.io/spring-security/reference/servlet/exploits/csrf.html" %}
+SpringBoot - CSRF Implementation Description
+{% endembed %}
+
+{% embed url="https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html" %}
+CSRF Prevention
+{% endembed %}
+
 ## CORS
 
 CORS (Cross-Origin Resource Sharing) is a security feature implemented by web browsers to control how resources, like APIs or web pages, are accessed from different origins (domains, protocols, or ports). It prevents web pages from making requests to a domain different from the one that served the web page unless explicitly allowed by the server. The key points are:
