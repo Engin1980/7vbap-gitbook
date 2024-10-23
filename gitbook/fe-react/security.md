@@ -273,6 +273,10 @@ axios.interceptors.request.use(
 //endregion
 ```
 
+{% hint style="info" %}
+Note that `X-XSRF-TOKEN` is a HTTP header name where SpringBoot expects the CSRF token if exists.
+{% endhint %}
+
 
 
 
