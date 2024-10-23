@@ -7,7 +7,7 @@
 * [Project creation](be-spring-boot/project-creation.md)
 * [Database & JPA](be-spring-boot/database-and-jpa.md)
 * [Basic concepts](be-spring-boot/basic-concepts.md)
-* [Authentication, Authorization, JWT](be-spring-boot/authentication-authorization-jwt.md)
+* [Security](be-spring-boot/security.md)
 * [Finalization](be-spring-boot/finalization.md)
 
 ## BE - .NET
