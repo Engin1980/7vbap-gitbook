@@ -1,9 +1,9 @@
 import {SubmitHandler, useForm} from "react-hook-form";
 import {MDBBtn, MDBContainer, MDBInput} from "mdb-react-ui-kit";
-import axios from "axios";
 import {toast} from "react-toastify";
 import {useRef} from "react";
 import Popup from "reactjs-popup";
+import useHttp from "../../hooks/use-http";
 
 type Data = {
   address : string;
@@ -22,6 +22,7 @@ function UrlCreatePopup(params : Params){
     reset,
     formState : {errors}
   } = useForm<Data>();
+  const http = useHttp();
   const cbRef = useRef<any>();
 
   const openPopup = () => cbRef.current.open();
@@ -34,7 +35,7 @@ function UrlCreatePopup(params : Params){
     formData.append("appUserId", params.appUserId.toString());
 
     try{
-      await axios.post("http://localhost:32123/v1/url", formData);
+      await http.post("/v1/url", formData);
       closePopup();
       params.refresh();
       toast.success("Link stored successfully.");
