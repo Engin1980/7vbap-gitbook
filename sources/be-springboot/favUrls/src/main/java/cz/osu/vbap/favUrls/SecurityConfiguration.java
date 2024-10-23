@@ -18,8 +18,14 @@ public class SecurityConfiguration {
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    CookieCsrfTokenRepository cookieCsrfTokenRepository = new CookieCsrfTokenRepository();
+    cookieCsrfTokenRepository.setCookieCustomizer(q->{
+      q.httpOnly(false);
+      q.sameSite("Strict");
+      q.secure(true);
+    });
     http.csrf(q -> q
-            .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+            .csrfTokenRepository(cookieCsrfTokenRepository)
             .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()));
     http.addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class);
 
