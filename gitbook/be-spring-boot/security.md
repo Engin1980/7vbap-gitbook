@@ -224,6 +224,170 @@ CORS (Cross-Origin Resource Sharing) is a security feature implemented by web br
   * **`Access-Control-Allow-Methods`**: Lists the allowed HTTP methods (GET, POST, etc.).
   * **`Access-Control-Allow-Credentials`**: Indicates whether credentials like cookies or HTTP authentication are allowed.
 
+To set up cors protection in Spring, you have to configure the access control and set it up in the configuration. Typically, CORS are set up with respect to the accessed REST API end points. To do so, you need three classes:
+
+* `CorsConfiguration` to define the specific cors configuration, that is which origins (incoming URLs) ale allowed, which HTTP methods are allowed, which HTTP Headers are allowed and if credentials are allowed.&#x20;
+* `UrlBasedCorsConfigurationSource` is able to assign the `corsConfiguration` to a URL (or a url pattern), so the mechanism is later able based on url pick the correct cors configuration to apply. So, you can have different configurations for different endpoints.
+* `SecurityConfiguration` where the whole mechanism is set up. (This step is optional with respect to the way how the first two parts are constructed).
+
+There are in general three possible approaches how to build the whole mechanism in source code:
+
+* Define and set up `UrlBasedCorsConfigurationSource` as a `@Bean` so it is automatically used by SpringBoot.
+* Define and set up a custom class inherited from `UrlBasedCorsConfigurationSource` as a `@Component`, so it is automatically used by SpringBoot.
+* Define the whole part inside of the `SecurityConfig.securityFilterChain()` method.&#x20;
+
+The most common approach is the first one. However, for simplicity, we will use the third one.
+
+
+
+{% tabs %}
+{% tab title="CORS as @Bean" %}
+```java
+// ...
+@Configuration
+public class SecurityConfig {
+
+  @Bean
+  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http.cors();  // Enable CORS
+    // ...
+    return http.build();
+  }
+
+  @Bean
+  public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
+    configuration.addAllowedOrigin("http://localhost:3000");  // Specify allowed origins
+    configuration.addAllowedMethod("*");  // Allow any HTTP methods (GET, POST, etc.)
+    configuration.addAllowedHeader("*");  // Allow any headers
+    configuration.setAllowCredentials(true);  // Allow credentials like cookies or authorization headers
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);  // Apply CORS settings globally
+    return source;
+  }
+}
+```
+
+
+{% endtab %}
+
+{% tab title="CORS as @Component" %}
+```java
+// ...
+@Component
+public class CustomCorsConfigurationSource implements CorsConfigurationSource {
+
+  @Override
+  public CorsConfiguration getCorsConfiguration(javax.servlet.http.HttpServletRequest request) {
+    CorsConfiguration configuration = new CorsConfiguration();
+    configuration.addAllowedOrigin("http://localhost:3000");  // Specify allowed origins
+    configuration.addAllowedMethod("*");  // Allow all HTTP methods
+    configuration.addAllowedHeader("*");  // Allow all headers
+    configuration.setAllowCredentials(true);  // Allow credentials (cookies, authorization headers)
+    return configuration;
+  }
+
+  @Bean
+  public UrlBasedCorsConfigurationSource corsConfigurationSource() {
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", getCorsConfiguration(null));  // Apply CORS settings globally
+    return source;
+  }
+}
+```
+
+
+{% endtab %}
+
+{% tab title="CORS in SecurityConfig" %}
+```java
+// ...
+@Configuration
+@EnableWebSecurity
+public class SecurityConfiguration {
+
+  @Bean
+  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http.cors(q -> {
+      CorsConfiguration corsConfiguration = new CorsConfiguration();
+      corsConfiguration.addAllowedOrigin("http://localhost:3000");
+      corsConfiguration.addAllowedMethod("*");
+      corsConfiguration.addAllowedHeader("*");
+      corsConfiguration.setAllowCredentials(true);
+
+      UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+      source.registerCorsConfiguration("/**", corsConfiguration);
+
+      q.configurationSource(source);
+    });
+    // ...
+
+    return http.build();
+  }
+}
+```
+
+
+{% endtab %}
+{% endtabs %}
+
+Typically, the most important part is _allowed origin_. This is the URL from which the requests are incoming into the REST API - typically the URL of the front-end application. You may opt-out some HTTP methods, but typically you use all of them (or do not define endpoints for some).
+
+So in our case, our `SecurityConfiguration` code will change to:
+
+```java
+package cz.osu.vbap.favUrls;
+
+import cz.osu.vbap.favUrls.security.CsrfCookieFilter;
+import cz.osu.vbap.favUrls.security.SpaCsrfTokenRequestHandler;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfiguration {
+
+  @Bean
+  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http.csrf(q -> q
+            .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+            .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()));
+    http.addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class);
+
+    http.cors(q -> {
+      CorsConfiguration corsConfiguration = new CorsConfiguration();
+      corsConfiguration.addAllowedOrigin("http://localhost:3000");
+      corsConfiguration.addAllowedMethod("*");
+      corsConfiguration.addAllowedHeader("*");
+      corsConfiguration.setAllowCredentials(true);
+
+      UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+      source.registerCorsConfiguration("/**", corsConfiguration);
+
+      q.configurationSource(source);
+    });
+
+    http.authorizeHttpRequests(q -> q.anyRequest().permitAll());
+
+    return http.build();
+  }
+}
+```
+
+You may try to change the origin to a different one (e.g., change port number) and run the front-end application. If its URL differs, the front-end app will get HTTP status 403 - Forbidden as a result.
+
+{% hint style="info" %}
+Typically, you can set the origin from the configuration file, so you can easily change the URL without the need of code compilation if needed.
+{% endhint %}
+
 ## Protecting REST API Endpoints
 
 TODO
