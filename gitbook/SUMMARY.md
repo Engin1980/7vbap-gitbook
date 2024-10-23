@@ -8,6 +8,7 @@
 * [Database & JPA](be-spring-boot/database-and-jpa.md)
 * [Basic concepts](be-spring-boot/basic-concepts.md)
 * [Security](be-spring-boot/security.md)
+* [Authentication + Authorization](be-spring-boot/authentication-+-authorization.md)
 * [Finalization](be-spring-boot/finalization.md)
 
 ## BE - .NET
