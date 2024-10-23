@@ -19,6 +19,7 @@
 * [Project creation](fe-react/page-3.md)
 * [Url List - first component prototype](fe-react/url-list-first-component-prototype.md)
 * [Url Create - form component prototype](fe-react/url-create-form-component-prototype.md)
+* [Security](fe-react/security.md)
 
 ## FE - Angular
 
