@@ -60,7 +60,6 @@ public class SecurityConfiguration {
     return http.build();
   }
 }
-
 ```
 {% endcode %}
 
@@ -163,7 +162,49 @@ public final class SpaCsrfTokenRequestHandler extends CsrfTokenRequestAttributeH
 
 ```
 
+Next step is a specific implementation of CSRF token request handler to protect against BREACH attacks.&#x20;
 
+The more detailed explanation of this behavior is beyond the scope of this text. See the links below for further info.
+
+### Updating security configuration
+
+Now, we can enable the CSRF protection in the `SecurityConfiguration` class.
+
+{% code lineNumbers="true" %}
+```java
+// ...
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfiguration {
+
+  @Bean
+  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http.csrf(q -> q
+            .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+            .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()));
+    http.addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class);
+    
+    http.cors(q -> q.disable());
+    http.authorizeHttpRequests(q -> q.anyRequest().permitAll());
+
+    return http.build();
+  }
+}
+```
+{% endcode %}
+
+Here, we:
+
+* set up the token repository as cookie token repository (line 8). Moreover, we are setting the cookie to be `httpOnly=false`, co we can read it using JavaScript at the front end;
+* set up our custom token handler - line 9;
+* add our custom filter among the the other filters, before the `CsrfFilter` class.
+
+From now, the app is CSRF secured. If you have not implemented the CSRF behavior at the front end, you will no more be able to do other requests than HTTP GET. All other requests will return HTTP status 403 - Forbidden.
+
+{% hint style="info" %}
+To continue with security, we suggest firstly implement the CSRF protection at front-end, so you can validate the correct behavior. Then continue with the implementation of the next security parts.
+{% endhint %}
 
 ## CORS
 
