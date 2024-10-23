@@ -7,7 +7,7 @@
 * [Project creation](be-spring-boot/project-creation.md)
 * [Database & JPA](be-spring-boot/database-and-jpa.md)
 * [Basic concepts](be-spring-boot/basic-concepts.md)
-* [Authentication, Authorization, JWT](be-spring-boot/authentication-authorization-jwt.md)
+* [Security](be-spring-boot/security.md)
 * [Finalization](be-spring-boot/finalization.md)
 
 ## BE - .NET
@@ -18,7 +18,8 @@
 
 * [Project creation](fe-react/page-3.md)
 * [Url List - first component prototype](fe-react/url-list-first-component-prototype.md)
-* [Url Edit/Create - form component prototype](fe-react/url-edit-create-form-component-prototype.md)
+* [Url Create - form component prototype](fe-react/url-create-form-component-prototype.md)
+* [Security](fe-react/security.md)
 
 ## FE - Angular
 

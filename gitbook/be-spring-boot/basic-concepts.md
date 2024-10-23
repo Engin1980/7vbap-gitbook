@@ -172,37 +172,44 @@ import cz.osu.vbap.favUrls.services.AppService;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.*;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 
 @Aspect
 @Component
-public class ControllerAspect {
-  private final Logger logger = LoggerFactory.getLogger(this.getClass());
+public class AppServiceAspect {
+  @Pointcut("within(cz.osu.vbap.favUrls.services.AppService+))")
+  public void appServiceMethods(){}
 
-  @Pointcut("execution(* cz.osu.vbap.favUrls.controllers..*(..))")
-  public void controllerMethods(){}
-
-  @Before("controllerMethods()")
+  // Before advice: runs before the method execution
+  @Before("appServiceMethods()")
   public void logBefore(JoinPoint joinPoint) {
+    AppService service = (AppService) joinPoint.getTarget();
+    Logger logger = service.getLogger();
     String className = joinPoint.getTarget().getClass().getSimpleName();
     String methodName = joinPoint.getSignature().getName();
     String methodArgs = Arrays.toString(joinPoint.getArgs());
-    logger.info("AOP-C:: {}.{}() invoked with arguments: {}", className, methodName, methodArgs);
+    logger.info("AOP:: {}.{}() invoked with arguments: {}", className, methodName, methodArgs);
   }
 
-  @AfterReturning(pointcut = "controllerMethods()", returning = "result")
+  // Advice that runs after a method returns successfully
+  @AfterReturning(pointcut = "appServiceMethods()", returning = "result")
   public void logAfterReturning(JoinPoint joinPoint, Object result) {
+    AppService service = (AppService) joinPoint.getTarget();
+    Logger logger = service.getLogger();
+
     String className = joinPoint.getTarget().getClass().getSimpleName();
     String methodName = joinPoint.getSignature().getName();
     String methodArgs = Arrays.toString(joinPoint.getArgs());
-    logger.info("AOP-C:: {}.{}() completed with arguments: {} and result: {}", className, methodName, methodArgs, result);
+    logger.info("AOP:: {}.{}() completed with arguments: {} and result: {}", className, methodName, methodArgs, result);
   }
 
-  @AfterThrowing(pointcut = "controllerMethods()", throwing = "exception")
+  @AfterThrowing(pointcut = "appServiceMethods()", throwing = "exception")
   public void logAfterThrowing(JoinPoint joinPoint, Throwable exception) {
+    AppService service = (AppService) joinPoint.getTarget();
+    Logger logger = service.getLogger();
+
     String className = joinPoint.getTarget().getClass().getSimpleName();
     String methodName = joinPoint.getSignature().getName();
     String methodArgs = Arrays.toString(joinPoint.getArgs());
@@ -215,7 +222,7 @@ public class ControllerAspect {
 
 Code is very similar. There are two significant defferences:
 
-* The point cut a line 17 is different, now aimed at the all descendants of the (not yet existing) `AppService` class.
+* The point cut a line 14 is different, now aimed at the all descendants of the (not yet existing) `AppService` class.
 * &#x20;The only difference is that the logger is taken from the invocating source - a descendant of `AppService` class. `AppService` defines the logger of the service, and we use this logger for logging.
 
 {% hint style="info" %}
