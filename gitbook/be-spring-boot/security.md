@@ -214,6 +214,37 @@ SpringBoot - CSRF Implementation Description
 CSRF Prevention
 {% endembed %}
 
+### Side notes
+
+Sometimes you need more detailed adjust of the CSRF cookie. To do so, you can create the `cookieCsrfTokenRepository` and use `setCookieCustomizer()` method to adjust the cookie behavior:
+
+```java
+// ...
+@Configuration
+@EnableWebSecurity
+public class SecurityConfiguration {
+
+  @Bean
+  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    CookieCsrfTokenRepository cookieCsrfTokenRepository = new CookieCsrfTokenRepository();
+    cookieCsrfTokenRepository.setCookieCustomizer(q -> {
+      q.httpOnly(false);
+      q.sameSite("Strict");
+      q.secure(true);
+    });
+    http.csrf(q -> q
+            .csrfTokenRepository(cookieCsrfTokenRepository)
+            .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()));
+    // ...
+  }
+}
+
+```
+
+{% hint style="info" %}
+Note that setting cookie as _secure_ without the usage of HTTPS have no effect.
+{% endhint %}
+
 ## CORS
 
 CORS (Cross-Origin Resource Sharing) is a security feature implemented by web browsers to control how resources, like APIs or web pages, are accessed from different origins (domains, protocols, or ports). It prevents web pages from making requests to a domain different from the one that served the web page unless explicitly allowed by the server. The key points are:
@@ -390,4 +421,34 @@ Typically, you can set the origin from the configuration file, so you can easily
 
 ## Protecting REST API Endpoints
 
-TODO
+In the next part, we will aim at user management, authentication and authorization. We let only authorized users can access specific endpoints.
+
+Now, we will set up the basic behavior, again in the `SecurityConfiguration` class:
+
+```java
+// ...
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfiguration {
+
+  // ...
+
+  @Autowired private AuthenticationJwtFilter authenticationJwtFilter;
+
+  @Bean
+  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    // ... csrf + cors
+
+    http.authorizeHttpRequests(q -> q
+            .requestMatchers("/v1/appUser/login").permitAll()
+            .requestMatchers("v1/appUser/logout").permitAll()
+            .requestMatchers("/v1/appUser/register").permitAll()
+            .requestMatchers("/**").authenticated());
+
+    return http.build();
+  }
+}
+```
+
+Here, we set that _login_, _logout_ and _register_ endpoints at the specified path can be accessed by anyone. The rest of the endpoints will be protected by the authentication and authorization.
