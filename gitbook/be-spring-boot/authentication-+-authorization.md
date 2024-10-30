@@ -176,7 +176,363 @@ At the end, a new user is returned from the service (containing the newly assign
 
 ## User Authorization
 
-TODO
+Next part is user authorization. That means, how Spring Boot validates if there is a currently logged user.
+
+In our approach, we expect that the _access token_ is represented by JWT (JSON Web Token) containing information about the logged user is stored in _http-only_ cookie, which is automatically send during any request. So, the Spring Boot security mechanism should look for this cookie, extract the token, validate its validity, and if the token is valid, it should inject the user info into the Spring Boot Security mechanism.
+
+{% embed url="https://jwt.io/" %}
+More info about JWT
+{% endembed %}
+
+To do so, we need to:
+
+* Implement `JwtTokenUtil` class which helps us with the stuff regarding the JWT token.
+* Implement `AuthenticationJwtFilter` , which will be added in the request processing queue. It looks and validates the JWT token. If the validation is successfull, it injects the info about the user into Spring Boot Security.
+* Add the filter into the request processing queue.
+
+### JwtTokenUtil
+
+#### JWT
+
+JWT (JSON Web Token) is a compact, URL-safe token format commonly used for securely transmitting information between parties. It’s widely used in web applications for authentication and authorization purposes. A JWT consists of three parts:
+
+1. **Header**: Specifies the token type (JWT) and the signing algorithm (e.g., HMAC, SHA-256).
+2. **Payload**: Contains the **claims**, which are statements about an entity (usually the user) and additional metadata. Claims might include user ID, roles, and permissions. Additionaly, it contains some times; most important are _nbf_ - _not before_ and _exp_ - _expires at_ defining the time window when the token is valid.
+3. **Signature**: A cryptographic signature generated from the header, payload, and a secret key. This ensures that the token has not been altered.
+
+In practice, JWTs are popular because they are stateless, which means they don’t require server-side storage for validation, making them scalable for distributed systems. However, JWTs should be securely managed and have limited lifespans to prevent misuse if intercepted.
+
+#### JWT Dependencies
+
+There is no internal implementation for JWT operations. To work with JWT, we need to add a dependency. The most common used one for JWT is "JJWT":
+
+```xml
+<!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-api -->
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt-api</artifactId>
+    <version>0.12.6</version>
+</dependency>
+<!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-impl -->
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt-impl</artifactId>
+    <version>0.12.6</version>
+    <scope>runtime</scope>
+</dependency>
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt-jackson</artifactId> <!-- or jjwt-gson if Gson is preferred -->
+    <version>0.12.6</version>
+    <scope>runtime</scope>
+</dependency>
+```
+
+#### Configuration Settings
+
+To work with tokens, we will use refresh-access token pattern. To encrypt the token, we will also need a key. For now, we store all those values in the `application.properties` file:
+
+```properties
+# security
+app.security.privateKey=thisKeyShouldBeStoredInOperatingSystemEnvironmentVariable
+app.security.accessTokenExpirationSeconds=60
+app.security.refreshTokenExpirationSeconds=1800
+```
+
+{% hint style="info" %}
+Note that private key **should not** be stored in `application.properties` file as this file is typically stored in the repository. In this case, source code leak will compromise the security of the application.
+
+Typically, keys should be stored in secret vaults or environtment variables.
+{% endhint %}
+
+{% embed url="https://www.descope.com/blog/post/access-token-vs-refresh-token" %}
+Access vs Refresh Tokens
+{% endembed %}
+
+#### JwtTokenUtil
+
+As a next step, we will create a class providing basic token operations. This class will be stored in `.../src/security/` folder and will be named `JwtTokenUtil`:
+
+```java
+// ...
+
+@Component
+public class JwtTokenUtil extends AppService {
+  @Value("${app.security.privateKey}")
+  private String secretKey;
+  @Value("${app.security.refreshTokenExpirationSeconds}")
+  private int refreshTokenExpirationInSeconds;
+  @Value("${app.security.accessTokenExpirationSeconds}")
+  private int accessTokenExpirationInSeconds;
+  private static final String APP_USER_ID_CLAIM_NAME = "appUserId";
+
+  // ...
+}
+```
+
+Note that the whole class is defined as a `@Component` - so it can use injected values from properties (`@Value` annotations) and also itself can be injected when required.
+
+Now, we will explain its content methods part by part. Let's start with the token creation.&#x20;
+
+```java
+public String generateAccessToken(String refreshToken) {
+  String email = extractUsername(refreshToken);
+  int appUserId = getAppUserId(refreshToken);
+  String ret = generateToken(email, appUserId, accessTokenExpirationInSeconds);
+  return ret;
+}
+
+public String generateRefreshToken(String email, int appUserId) {
+  String ret = generateToken(email, appUserId, refreshTokenExpirationInSeconds);
+  return ret;
+}
+
+private String generateToken(String userName, int appUserId, int expirationInSeconds) {
+  Map<String, Object> claims = new HashMap<>();
+  claims.put(APP_USER_ID_CLAIM_NAME, appUserId);
+  String ret = Jwts.builder()
+          .claims(claims)
+          .subject(userName)
+          .issuedAt(new Date(System.currentTimeMillis()))
+          .expiration(new Date(System.currentTimeMillis() + 1000L * expirationInSeconds))
+          .signWith(getSignKey())
+          .compact();
+  return ret;
+}
+
+private SecretKey getSignKey() {
+  byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+  return Keys.hmacShaKeyFor(keyBytes);
+}
+```
+
+Here we have four methods:
+
+* The first and second ones are public and used to generate a token. The _refresh_ token needs user info. The _access_ token needs valid refresh token and extracts the user info from its content.
+* The fourth one is used to convert the key from `String` format to `byte[]` array and finally to `Key` instance.
+* The third one is creating a token. It
+  * Defines a custom claim with `appUserId`.
+  * Sets other primary claims - subject (definition of the logged user, e-mail in our case), issue and expiration date (we do not use `nbf` claim as we need let the token is valid immediatelly)
+  * Sign the data with the key.
+  * Compact the token into the `String` representation.
+
+The next part is token decoding and validation. Let's add another functions:
+
+```java
+public boolean isValid(String token) {
+  if (token == null || token.isEmpty()) return false;
+  try {
+    extractAllClaims(token);
+    return true;
+  } catch (ExpiredJwtException e) {
+    return false;
+  }
+}
+
+public int getAppUserId(String jwt) {
+  Claims claims = extractAllClaims(jwt);
+  return (int) claims.get(APP_USER_ID_CLAIM_NAME);
+}
+
+public String getSubject(String jwt) {
+  return this.extractUsername(jwt);
+}
+
+private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+  final Claims claims = extractAllClaims(token);
+  return claimsResolver.apply(claims);
+}
+
+private Claims extractAllClaims(String token) {
+  return Jwts
+          .parser()
+          .verifyWith(getSignKey())
+          .build()
+          .parseSignedClaims(token)
+          .getPayload();
+}
+
+private String extractUsername(String token) {
+  return extractClaim(token, Claims::getSubject);
+}
+
+private Date extractExpiration(String token) {
+  return extractClaim(token, Claims::getExpiration);
+}
+
+private Boolean isTokenExpired(String token) {
+  return extractExpiration(token).before(new Date());
+}
+```
+
+Here we have several functions:
+
+* `isValid()` checks the validity of the JWT. If the token is empty or null, it is invalid. Then, if token claims **cannot be extracted**, the token is invalid or expired.
+* `getAppUserId()` and `getSubject()` returns user's id and e-mail.
+* `extractAllClaims()` extract all token info using dependecies.
+* The other functions just simply extract claims from the token data.
+
+### AuthenticationJwtFilter
+
+The second step is the filter, which will be inserted among the other filters processing the requests.
+
+{% hint style="info" %}
+**Request Filters** in Spring Boot are used to intercept and process HTTP requests and responses. Filters can modify request and response headers, log request details, perform authentication, or add cross-cutting concerns like security and logging before or after reaching the controller layer. In Spring Boot, filters are implemented by creating classes that implement the `Filter` interface or by using the `@Component` annotation to mark a filter as a Spring-managed bean.
+{% endhint %}
+
+To create a filter, create `AuthenticationJwtFilter`in the `security` folder in the app:
+
+{% code lineNumbers="true" %}
+```java
+// ...
+
+@Component
+public class AuthenticationJwtFilter extends OncePerRequestFilter {
+
+  public static final String ACCESS_TOKEN_COOKIE_NAME = "access_token";
+  public static final String REFRESH_TOKEN_COOKIE_NAME = "refresh_token";
+  public static final String APP_USER_ID_REQUEST_ATTRIBUTE_NAME = "__appUserId";
+
+  private enum TokenState {
+    NO_TOKEN,
+    VALID,
+    INVALID,
+    ERROR
+  }
+
+  @Autowired
+  private JwtTokenUtil jwtTokenUtil;
+
+  private static final Logger logger = LoggerFactory.getLogger(AuthenticationJwtFilter.class);
+
+  @Override
+  protected void doFilterInternal(
+          HttpServletRequest request,
+          HttpServletResponse response,
+          FilterChain filterChain)
+          throws ServletException, IOException {
+
+    logger.debug("AuthenticationJwtFilter invoked");
+
+    String jwt = tryExtractJwtFromRequest(request);
+    TokenState state;
+    if (jwt == null || jwt.isEmpty()) {
+      state = TokenState.NO_TOKEN;
+    } else if (jwtTokenUtil.isValid(jwt)) {
+      state = TokenState.VALID;
+    } else {
+      state = TokenState.INVALID;
+    }
+
+    if (state == TokenState.VALID) {
+      try {
+        processValidToken(request, jwt);
+      } catch (Exception ex) {
+        logger.error("Failed to process authentication procedure: {}", ex.toString());
+        state = TokenState.ERROR;
+      }
+    }
+
+    logger.info("JWT for {} is : {}", request.getRequestURL(), state);
+
+    switch (state) {
+      case ERROR:
+        response.sendError(HttpStatus.INTERNAL_SERVER_ERROR.value());
+        break;
+      case INVALID:
+      case VALID:
+      case NO_TOKEN:
+        filterChain.doFilter(request, response);
+        break;
+      default:
+        throw new java.lang.EnumConstantNotPresentException(TokenState.class, state.toString());
+    }
+  }
+
+  private void processValidToken(HttpServletRequest request, String jwt) {
+    String email = jwtTokenUtil.getSubject(jwt);
+
+    AppUserDetails userDetails = new AppUserDetails(email);
+    UsernamePasswordAuthenticationToken authentication =
+            new UsernamePasswordAuthenticationToken(
+                    userDetails,
+                    null,
+                    userDetails.getAuthorities());
+    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+    int appUserId = jwtTokenUtil.getAppUserId(jwt);
+    request.setAttribute(APP_USER_ID_REQUEST_ATTRIBUTE_NAME, appUserId);
+  }
+
+  private String tryExtractJwtFromRequest(HttpServletRequest request) {
+    String ret = null;
+    if (request.getCookies() != null) {
+      ret = Arrays.stream(request.getCookies())
+              .filter(q -> q.getName().equals(ACCESS_TOKEN_COOKIE_NAME))
+              .findFirst()
+              .map(q -> q.getValue()).orElse(null);
+    }
+    return ret;
+  }
+}
+
+```
+{% endcode %}
+
+The whole class is more-less straighforward. The most important behavior is in the `processValidToken` function at lines 66+. Here we:
+
+* extract the e-mail of the user - line 67,
+* create a new instance of `AppUserDetails` containing the user info (see hint box below) - line 69 and create Spring-Boot-Security authentication token (lines 70-74).
+* set the create user info into the Spring Boot Security context (line 76). From now, Spring Boot will know that there is some authenticated user.
+
+{% hint style="info" %}
+Spring Boot uses its own authentication mechanism inside to distinguish the authenticated user. This mechanism uses an instance of the interface `UserDetails`, where all the necessary data are provided. So, we need to create an instance of this interface, fill it with data and pass those data into the Spring Boot Security context.
+
+There are typically two ways how to create an instance of the `UserDetails` interface:
+
+* you create a custom class derived from `UserDetails` and use it, or
+* you inherit your user-data-class (`AppUser` in our case) from `UserDetails`, so you can later provide it as an interface implementation.
+{% endhint %}
+
+In our case, we stick with the first approach - we will create one additional class used to pass user data into Spring Boot security realm - `AppUserDetails` with again quite simple and straighforward code:
+
+```java
+// ...
+
+@Getter
+@RequiredArgsConstructor
+public class AppUserDetails implements UserDetails {
+  private final Collection<? extends GrantedAuthority> authorities = new HashSet<>();
+  private final String username;
+  private final String password = null;
+}
+```
+
+{% hint style="info" %}
+Note that `authorities` collection is typically used to pass roles or other related data to the user account. As we do not use roles in our example, we keep this list empty.
+{% endhint %}
+
+### Registering the filter
+
+The last step is to register the filter into the request filter queue, so it is applied. The filter will be registered just before `UsernamePasswordAuthenticationFilter` and the registration is again done in `SecurityConfiguration.securityFilterChain(..)` method:
+
+```java
+// ...
+@Configuration
+@EnableWebSecurity
+public class SecurityConfiguration {
+  // ...
+  @Bean
+  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    // ...  
+    // http.authorizeHttpRequests(...   
+    http.addFilterBefore(authenticationJwtFilter, UsernamePasswordAuthenticationFilter.class);
+
+    return http.build();
+  }
+}
+```
 
 ## User Authentication - Login
 

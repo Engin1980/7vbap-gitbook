@@ -440,6 +440,10 @@ The last code listing shows how the values are injected into private fields of a
 * Join `@Autowired` with the argument of the constructor; the value is the injected directly into the constructor, and is later stored in a private field. Although this option is more verbose,  it is preferred.
 {% endhint %}
 
+{% hint style="info" %}
+Although we just declared that the `@Autowired` via the constructor is the most preferred approach, in this course we stick with private field DI as it is more compact solution. Note that it is only for the simplicity. In real project, you should follow the Spring Boot suggestions.
+{% endhint %}
+
 ## RestController
 
 ## DTO - Data Transfer Object
