@@ -536,7 +536,118 @@ public class SecurityConfiguration {
 
 ## User Authentication - Login
 
-TODO
+To do the user login, the flow will be as follows:
+
+1. REST API accepts a login request at `AppUserController`.
+2. Controller forwards the login request to `AuthenticationService`.
+3. Service validates the user. If the user is valid, refresh and access tokens are created. Moreover, refresh token is stored in the database.
+4. If user is successfully validated, the controller creates two cookies - for refresh and access tokens and return them in the request
+5. Finally, the controller creates a DTO containing user data and returns it to the caller.
+
+TODO add image Imgs/login-schema.png
+
+### Controller update
+
+The respective code of the controller is:
+
+```java
+// ...
+
+@RestController
+@RequestMapping("/v1/appUser")
+public class AppUserController {
+  // ...
+
+  private Cookie buildTokenCookie(String name, String value, int expiration) {
+    final Cookie ret = new Cookie(name, value);
+    ret.setHttpOnly(true);
+    ret.setPath("/");
+    ret.setMaxAge(expiration);
+    ret.setAttribute("SameSite", "Strict");
+    return ret;
+  }
+
+  // ...
+
+  @PostMapping("/login")
+  public AppUserView login(String email, String password, HttpServletResponse response) throws AppServiceException {
+    AppUserView ret;
+    AuthenticationService.LoginResponse tmp;
+    try {
+      tmp = authenticationService.login(email, password);
+
+      final Cookie accessTokenCookie = buildTokenCookie(
+        ACCESS_TOKEN_COOKIE_NAME, tmp.accessToken(), accessTokenExpirationInSeconds);
+      response.addCookie(accessTokenCookie);
+
+      final Cookie refreshTokenCookie = buildTokenCookie(
+        REFRESH_TOKEN_COOKIE_NAME, tmp.refreshToken(), refreshTokenExpirationInSeconds);
+      response.addCookie(refreshTokenCookie);
+
+      ret = AppUserView.of(tmp.appUser());
+    } catch (Exception ex) {
+      deleteTokenCookies(response);
+      throw ex;
+    }
+
+    return ret;
+  }  
+}
+```
+
+A small notes here regarding the `buildTokenCookie()`:
+
+* The path of the cookie should be set to `/`. By default, the path is set with respect to the calling URL, so `/v1/appUser` in our case, and will work only for this (or nested) paths. By setting the path as mentioned above we ensure the cookie will be valid for the whole appliation.
+* There were some significant changes how cookies are handled by browsers w.r.t. to their `SameSite` policy. By default, this policy is not set. We set the policy to `Strict` ensuring that only the original site can use the cookie.
+* We also set the max cookie age. The content of the cookie (the JWT token) will expire regardless the cookie expiration time. However, by setting the expiration we ensure that the token is automatically deleted from the browser when expires.
+
+{% embed url="https://web.dev/articles/samesite-cookies-explained" %}
+Cookies Same-Site attribute explanation
+{% endembed %}
+
+### Service update
+
+The next part is the implementation of the login feature in the `AuthenticationService`. We simply add the login function together with a record ecapsulating returned data:
+
+{% code lineNumbers="true" %}
+```java
+public record LoginResponse(
+  String refreshToken, 
+  String accessToken, 
+  AppUser appUser) {}
+
+public LoginResponse login(String email, String password) throws AppServiceException {
+  LoginResponse ret;
+  Optional<AppUser> appUserOpt = tryInvoke(() -> appUserRepository.findByEmail(email));
+
+  if (appUserOpt.isEmpty() || !isValidCredentials(appUserOpt.get(), password))
+    throw new BadRequestException(this, "Invalid credentials.");
+
+  AppUser appUser = appUserOpt.get();
+  String refreshToken = jwtTokenUtil.generateRefreshToken(appUser.getEmail(), appUser.getAppUserId());
+  String accessToken = jwtTokenUtil.generateAccessToken(refreshToken);
+  try {
+    storeRefreshToken(appUser, refreshToken);
+  } catch (Exception e) {
+    throw new InternalException(this, "Failed to login", e);
+  }
+  ret = new LoginResponse(refreshToken, accessToken, appUser);
+
+  return ret;
+}
+
+private boolean isValidCredentials(AppUser appUser, String password) {
+  return passwordEncoder.matches(password, appUser.getPasswordHash());
+}
+```
+{% endcode %}
+
+Here, we:
+
+* Try to get the user by e-mail (line 6).
+* Ensure the user exists and the password is valid (lines 8-9).
+* Generate refresh and access tokens (lines 12-13).
+* Store the refresh token in the database (lines 14-18).
 
 ## User Logout
 
