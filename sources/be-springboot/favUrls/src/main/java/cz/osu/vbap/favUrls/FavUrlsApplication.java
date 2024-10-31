@@ -8,6 +8,7 @@ import cz.osu.vbap.favUrls.model.repositories.AppUserRepository;
 import cz.osu.vbap.favUrls.model.repositories.TagRepository;
 import cz.osu.vbap.favUrls.model.repositories.TokenRepository;
 import cz.osu.vbap.favUrls.model.repositories.UrlRepository;
+import cz.osu.vbap.favUrls.services.AuthenticationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -31,17 +32,16 @@ public class FavUrlsApplication {
    */
   @Bean
   public CommandLineRunner initDatabase(
+          @Autowired AuthenticationService authenticationService,
           @Autowired AppUserRepository appUserRepository,
           @Autowired TagRepository tagRepository,
-          @Autowired UrlRepository urlRepository,
-          @Autowired TokenRepository tokenRepository) {
+          @Autowired UrlRepository urlRepository) {
     return _ -> {
 
       if (appUserRepository.findByEmail("marek.vajgl@osu.cz").isPresent())
         return; // data already exist
 
-      AppUser user = new AppUser("marek.vajgl@osu.cz");
-      appUserRepository.save(user);
+      AppUser user = authenticationService.register("marek.vajgl@osu.cz", "test");
 
       Tag privateTag = new Tag(user, "private", "F00");
       tagRepository.save(privateTag);
@@ -54,9 +54,6 @@ public class FavUrlsApplication {
 
       url = new Url(user, "NASA", "https://www.nasa.gov");
       urlRepository.save(url);
-
-      Token token = new Token(user, Token.Type.PASSWORD_RESET, "abcde");
-      tokenRepository.save(token);
     };
   }
 }

@@ -1,6 +1,7 @@
 package cz.osu.vbap.favUrls.controllers;
 
 import cz.osu.vbap.favUrls.controllers.dto.ErrorView;
+import cz.osu.vbap.favUrls.controllers.exceptions.ForbiddenException;
 import cz.osu.vbap.favUrls.services.exceptions.BadDataException;
 import cz.osu.vbap.favUrls.services.exceptions.BadRequestException;
 import cz.osu.vbap.favUrls.services.exceptions.InternalException;
@@ -62,6 +63,15 @@ public class ApiExceptionHandler {
     ResponseEntity<Error> ret = new ResponseEntity<>(
             new Error("Internal server error", null),
             HttpStatus.INTERNAL_SERVER_ERROR
+    );
+    return ret;
+  }
+
+  @ExceptionHandler(ForbiddenException.class)
+  public ResponseEntity<Error> exception(ForbiddenException e, WebRequest request) {
+    ResponseEntity<Error> ret = new ResponseEntity<>(
+            new Error("Forbidden", null),
+            HttpStatus.FORBIDDEN
     );
     return ret;
   }

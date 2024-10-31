@@ -7,6 +7,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface TokenRepository extends JpaRepository<Token, Integer> {
-  Optional<Token> findByAppUserAndType(AppUser appUser, Token.Type type);
+  Optional<Token> findByAppUser(AppUser appUser);
+
   Optional<Token> findByValue(String value);
+
+  void deleteByValue(String value);
+  void deleteByAppUser(AppUser appUser);
 }

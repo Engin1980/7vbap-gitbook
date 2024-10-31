@@ -15,41 +15,25 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @Table(uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"app_user_id", "type"}, name = "UQ_token_app_user_type")
+        @UniqueConstraint(columnNames = {"app_user_id"}, name = "UQ_token_app_user")
 })
 public class Token {
-
-  @Getter
-  @AllArgsConstructor
-  public enum Type {
-    REFRESH('R'), PASSWORD_RESET('P');
-    private final char code;
-  }
-
   @Id
   @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
   private int tokenId;
   @Column(unique = true, nullable = false)
   private String value;
-  @Column(nullable = false)
-  private LocalDateTime createdAt;
-
-  @Column(nullable = false)
-  private Type type;
 
   @ManyToOne
   @JoinColumn(name = "app_user_id", foreignKey = @ForeignKey(name = "FK_token_app_user"))
   private AppUser appUser;
 
   @Contract(pure = true)
-  public Token(AppUser appUser, Type type, String value) {
+  public Token(AppUser appUser, String value) {
     ArgVal.notNull(appUser, "appUser");
-    ArgVal.notNull(type, "type");
     ArgVal.notWhitespace(value, "value");
 
-    this.type = type;
     this.value = value;
-    this.createdAt = LocalDateTime.now();
     this.appUser = appUser;
   }
 }
