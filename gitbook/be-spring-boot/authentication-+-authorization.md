@@ -639,6 +639,13 @@ public LoginResponse login(String email, String password) throws AppServiceExcep
 private boolean isValidCredentials(AppUser appUser, String password) {
   return passwordEncoder.matches(password, appUser.getPasswordHash());
 }
+
+private void storeRefreshToken(AppUser appUser, String refreshToken) {
+  // exceptions handled at upper level
+  tokenRepository.findByAppUser(appUser).ifPresent(tokenRepository::delete);
+  Token token = new Token(appUser, refreshToken);
+  tokenRepository.save(token);
+}
 ```
 {% endcode %}
 
@@ -648,6 +655,8 @@ Here, we:
 * Ensure the user exists and the password is valid (lines 8-9).
 * Generate refresh and access tokens (lines 12-13).
 * Store the refresh token in the database (lines 14-18).
+
+Note also that we try to delete any previous existing refresh token for the specified user before creating the new one (line 32).
 
 ## Refresh Access Token
 
@@ -721,7 +730,67 @@ Here we try to get the token from the token repository. Then we validate, if the
 
 ## User Logout
 
-TODO
+The last part is the user logout. Now, it is simple:
+
+```java
+// ...
+
+@RestController
+@RequestMapping("/v1/appUser")
+public class AppUserController {
+  // ...
+  
+  private void deleteTokenCookies(HttpServletResponse response) {
+    final Cookie accessTokenCookie = buildTokenCookie(ACCESS_TOKEN_COOKIE_NAME, null, 0);
+    response.addCookie(accessTokenCookie);
+    final Cookie refreshTokenCookie = buildTokenCookie(REFRESH_TOKEN_COOKIE_NAME, null, 0);
+    response.addCookie(refreshTokenCookie);
+  }
+
+  @PostMapping("/logout")
+  public void logout(HttpServletRequest request, HttpServletResponse response) throws AppServiceException {
+    Optional<String> optExistingRefreshToken = Arrays.stream(request.getCookies())
+            .filter(q -> q.getName().equals(REFRESH_TOKEN_COOKIE_NAME))
+            .findFirst().map(q -> q.getValue());
+
+    //TODO resolve if exception changes already set cookies
+    deleteTokenCookies(response);
+
+    if (optExistingRefreshToken.isPresent()) {
+      authenticationService.logout(optExistingRefreshToken.get());
+    }
+  }
+}
+```
+
+In the REST endpoint, we only try to get the refresh token from the cookie. If some token is found, we delete it from the database using the service. Anyway, we always remove the (potential) _access_ and _refresh_ token cookies from the browser by setting their expiration to zero.
+
+In the service, we only simply delete the token from the repository:
+
+```java
+// ...
+
+@Service
+public class AuthenticationService extends AppService {
+  // ...
+
+  private void deleteRefreshToken(String refreshToken) {
+    tokenRepository.findByValue(refreshToken).ifPresent(tokenRepository::delete);
+  }
+
+  public void logout(String refreshToken) throws InternalException {
+    tryInvoke(() -> deleteRefreshToken(refreshToken));
+  }
+}
+```
+
+{% hint style="info" %}
+Note that for the simplicity we did not implement here any mechanism to delete expired tokens, which were not logged out explicitly.
+
+However, in the case of a new login, the old _refresh token_ is deleted from the database as there is unique constraint saying "only one token per user". See the "login" implementation in the service.
+{% endhint %}
+
+
 
 ## Interesting Links
 
