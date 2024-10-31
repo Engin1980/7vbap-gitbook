@@ -649,6 +649,76 @@ Here, we:
 * Generate refresh and access tokens (lines 12-13).
 * Store the refresh token in the database (lines 14-18).
 
+## Refresh Access Token
+
+The next parts are easily built on the previous implementation.
+
+The _access_ _token_ is expected to expire very often. In that case, a client front-end app should ask for a new access token using its valid _refresh token_. To do so, it needs an endpoint.
+
+```java
+// ...
+
+@RestController
+@RequestMapping("/v1/appUser")
+public class AppUserController {
+  // ...
+
+  @PostMapping(path = "/refresh")
+  public void refreshAccessToken(
+          HttpServletRequest request, 
+          HttpServletResponse response) throws AppServiceException {
+    Optional<Cookie> refreshTokenCookie = Arrays.stream(request.getCookies())
+            .filter(q -> q.getName().equals(REFRESH_TOKEN_COOKIE_NAME))
+            .findFirst();
+    if (refreshTokenCookie.isPresent()) {
+      String accessToken = authenticationService.refreshAccessToken(refreshTokenCookie.get().getValue());
+
+      final Cookie accessTokenCookie = buildTokenCookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, accessTokenExpirationInSeconds);
+      response.addCookie(accessTokenCookie);
+    } else {
+      deleteTokenCookies(response);
+    }
+  }
+}
+```
+
+The controller needs a new REST API for refresh request. To do the refresh, http request and http response are needed.
+
+Firstly, we extract the refresh cookie (if it exists) from the request and ask for a new access token via authentication service. If there is a success, a cookie with the new access token is created.
+
+{% hint style="info" %}
+Note that `HttpServletRequest` and `HttpServletResponse` objects are injected into the REST API method via dependency injection.
+{% endhint %}
+
+Similarly in service:
+
+```java
+// ...
+
+@Service
+public class AuthenticationService extends AppService {
+  // ...
+
+  public String refreshAccessToken(String refreshToken) throws AppServiceException {
+    String ret;
+
+    Optional<Token> tokenOpt = tryInvoke(() -> tokenRepository.findByValue(refreshToken));
+
+    if (tokenOpt.isEmpty() || !jwtTokenUtil.isValid(refreshToken))
+      throw new InvalidOrExpiredCredentialsException(this);
+
+    ret = jwtTokenUtil.generateAccessToken(refreshToken);
+
+    return ret;
+  }
+
+  // ...
+}
+
+```
+
+Here we try to get the token from the token repository. Then we validate, if the token exists and is valid. If so, we generate a new access token.
+
 ## User Logout
 
 TODO
