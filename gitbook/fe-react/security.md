@@ -2,7 +2,7 @@
 icon: square-4
 ---
 
-# Security
+# Security, Hooks
 
 ## useHttp - custom hook
 
@@ -223,7 +223,7 @@ To do so, we will use _interceptors_. An interceptor is a functionality, which a
 
 To do so, we firstly create a function extracting a CSRF token from cookie, if there is any:
 
-{% code lineNumbers="true" %}
+{% code title="use-hook.tsx" lineNumbers="true" %}
 ```typescript
 // region Local functions
 
@@ -257,6 +257,7 @@ The function
 
 Now, we will add a simple response interceptor, which adds a csrf token (if exists) to any request:
 
+{% code title="use-hook.tsx" %}
 ```typescript
 //region Interceptors
 
@@ -272,19 +273,16 @@ axios.interceptors.request.use(
 
 //endregion
 ```
+{% endcode %}
 
 {% hint style="info" %}
 Note that `X-XSRF-TOKEN` is a HTTP header name where SpringBoot expects the CSRF token if exists.
 {% endhint %}
 
-
-
-
+{% hint style="info" %}
+Note that you don't have to care about XSRF token refresh. The new token is provided by spring-boot automatically once the old one is invalid.
+{% endhint %}
 
 ## CORS
 
-todo
-
-## Authentication & Authorization
-
-todo
+The CORS security is fully handled on the backend side. From the front-end point-of-view, you have only to keep the correct server:port name, which is set in the back-end as a valid CORS site.
