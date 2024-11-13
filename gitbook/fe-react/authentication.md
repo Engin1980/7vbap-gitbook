@@ -487,3 +487,8 @@ export default Logout;
 Note the component has no (meaningful) body. It is supposed to log out the user from the backend and then navigate to login page.
 
 So, it simply invokes the logout REST API endpoint and on success navigates to `/Login` route (and component).
+
+{% hint style="info" %}
+Note that the principle of having access & refresh tokens in the `httpOnly` cookie only causes that we are not able to log-out user without the anticipation of the BackEnd. The BackEnd is the only one who can delete the `httpOnly` cookies directly (otherwise, the login is valid until their expiration).
+{% endhint %}
+
