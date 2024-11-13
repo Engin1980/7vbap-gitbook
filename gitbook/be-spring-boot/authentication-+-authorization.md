@@ -865,9 +865,13 @@ public interface TokenRepository extends JpaRepository<Token, Integer> {
 
 Here, we directly delete the data from the database using native SQL query.
 
-{% hint style="info" %}
+{% hint style="danger" %}
 Be aware how the native SQL queries are constructed and how the arguemtn values are passed to them, as the incorrect usage may lead to susceptibility to **SQL Injection** attacks.
 {% endhint %}
+
+{% embed url="https://support.marinsoftware.com/en_US/grids-tabs-columns/%E2%80%9Crow-was-updated-or-deleted-by-another-transaction%E2%80%9D" %}
+
+
 
 ## Interesting Links
 
