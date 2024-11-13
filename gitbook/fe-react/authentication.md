@@ -384,8 +384,106 @@ In the form, there is nothing special compared to the forms introduced previousl
 
 ## Token Refresh
 
-TODO
+In the current principle, we have two tokens:
+
+* short-lived _access token_ used to validate if the user can pefrom required operation, and
+* long-lived _refresh token_ used to generate new _access token_ if possible and required.
+
+Both tokens are send via _httpOnly_ cookie with every request to our backend.
+
+Now, we will implement the functionality refreshing the _access_ _token_. To do so, we need to intercept every response returned via axios. If the response has failed due to authorization, we try to refresh the _access token_ and then do the same request again. To do so, we will need an _axios response interceptor_ to our `useHttp` hook in `use-http.tsx` file:
+
+{% code lineNumbers="true" %}
+```typescript
+// ...
+//region Interceptors
+// ...
+axios.interceptors.response.use(
+  resp => resp,
+  async (err) => {
+    const originalRequest = err.config;
+    const isFirstAttempt = !originalRequest.isRetry;
+    const isOnceOnlyRequest = !originalRequest.url.endsWith("v1/appUser/refresh") && !originalRequest.url.endsWith("v1/appUser/login");
+    if (err.response.status === 403 && isFirstAttempt && isOnceOnlyRequest) {
+      try {
+        // try to get a new access-token to a cookie
+        const url = baseUrl + "/v1/appUser/refresh";
+        console.log("request to " + url);
+        await axios.post(url, null);
+        // then, try again original request
+        originalRequest.isRetry = true;
+        return axios(originalRequest);
+      } catch (exc) {
+        return Promise.reject(err);
+      }
+    } else {
+      console.error(err);
+      return Promise.reject(err);
+    }
+  }
+);
+//endregion
+
+function useHttp() {
+  // ...
+}
+
+export default useHttp;
+```
+{% endcode %}
+
+Here we:
+
+* get the original request info (line 7),
+* check if the request is a repeated one using a flag set later (line 8, flag set at line 17),
+* check if the request is `refresh` or `login` one - those should not be never repated (line 9),
+* and only if the request failed due to 403 and should be repeated:
+  * build and invoke the "refresh" request (lines 13-15),
+  * then invoke original request with `isRetry` flag (lines 17-18),
+  * if anything goes wrong, forward the error (line 20),
+* otherwise forward the error (line 23-24).
 
 ## Logout
 
-TODO
+The final implementation is the logout. On logout, we delete the cookies with tokens and remove the refresh token from the database.
+
+Logout component usage is already defined in `Logged User Panel`. Now, we add a component in`./src/components/user/logoud.tsx`:
+
+```typescript
+import {useLoggedUser} from "../../hooks/use-logged-user";
+import {useEffect, useState} from "react";
+import useHttp from "../../hooks/use-http";
+import {toast} from "react-toastify";
+import {useNavigate} from "react-router-dom";
+
+function Logout() {
+  const {logout} = useLoggedUser();
+  const http = useHttp();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    logout();
+
+    (async () => {
+      try {
+        await http.post("/v1/appUser/logout", null);
+        toast.success("Logged out successfully.");
+        navigate("/login");
+      } catch (ex) {
+        toast.error("There were some issue logging out.")
+        console.log(ex);
+      }
+    })();
+
+  }, []);
+
+  return <div>Logged out...</div>
+
+}
+
+export default Logout;
+```
+
+Note the component has no (meaningful) body. It is supposed to log out the user from the backend and then navigate to login page.
+
+So, it simply invokes the logout REST API endpoint and on success navigates to `/Login` route (and component).
