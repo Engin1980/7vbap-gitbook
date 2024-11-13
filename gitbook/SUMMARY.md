@@ -13,14 +13,15 @@
 
 ## BE - .NET
 
-* [Page 2](be-.net/page-2.md)
+* [Sources](be-.net/page-2.md)
 
 ## FE - React
 
 * [Project creation](fe-react/page-3.md)
 * [Url List - first component prototype](fe-react/url-list-first-component-prototype.md)
 * [Url Create - form component prototype](fe-react/url-create-form-component-prototype.md)
-* [Security](fe-react/security.md)
+* [Security, Hooks](fe-react/security.md)
+* [Authentication](fe-react/authentication.md)
 
 ## FE - Angular
 

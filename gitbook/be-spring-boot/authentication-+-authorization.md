@@ -728,6 +728,10 @@ public class AuthenticationService extends AppService {
 
 Here we try to get the token from the token repository. Then we validate, if the token exists and is valid. If so, we generate a new access token.
 
+{% hint style="info" %}
+Experiencing "Row Was Updated Or Deleted By Another Transaction"? See "Side Notes" at the end of the chapter.
+{% endhint %}
+
 ## User Logout
 
 The last part is the user logout. Now, it is simple:
@@ -790,7 +794,80 @@ Note that for the simplicity we did not implement here any mechanism to delete e
 However, in the case of a new login, the old _refresh token_ is deleted from the database as there is unique constraint saying "only one token per user". See the "login" implementation in the service.
 {% endhint %}
 
+{% hint style="info" %}
+Experiencing "Row Was Updated Or Deleted By Another Transaction"? See "Side Notes" at the end of the chapter.
+{% endhint %}
 
+## Side Notes
+
+### Row Was Updated Or Deleted By Another Transaction
+
+When you perform an update or delete operation, you may experience this issue. In our example, we need to deal with it when updating or logging out the user. In those operations, we **delete** the existing token.
+
+In React debug mode, all the `useState` updates are invoked twice to ensure the correct behavior in multiple invocations.
+
+{% embed url="https://stackoverflow.com/questions/50819162/why-is-my-function-being-called-twice-in-react" %}
+Why Reacti nvokes useEffect twice and how to disable this behavior.
+{% endembed %}
+
+If the logout is invoked twice, the request on the BackEnd is also invoked twice, causing that there are two **simultanous** requests to delete the request token entity from the database. As the first request will delete it and the second request is having already deleted token, it complains that "Row (=Entity) was deleted by another transaction".
+
+How to resolve this issue?
+
+#### **Disable React double-useEffect-invoation**
+
+You can follow the link above and disable React _strict_ state, so the invocation will be done only once.
+
+#### **Ensure sequential processing of requests**
+
+Another approach is to ensure that the content of the  `deleteRefreshToken()` method is invoked in a sequence way. If there are multiple simultaneous requests, it will serve the first request, then the second one, then the third one, ...
+
+To do so, you can use Java `synchronize` keyword and locks. The explanation goes beyond the content of this chapter, but for the illustration:
+
+```java
+private void deleteRefreshToken(String refreshToken) {
+  synchronized (AuthenticationService.class) {
+    tokenRepository.findByValue(refreshToken).ifPresent(tokenRepository::delete);
+  }
+}
+```
+
+The `synchronized` block cannot be executed simultaneously.&#x20;
+
+For more info, look for Java locking or `synchronized` keyword:
+
+{% embed url="https://www.w3schools.com/java/ref_keyword_synchronized.asp" %}
+Java Synchronized Keyword
+{% endembed %}
+
+#### **Use Pure SQL Deletion**
+
+The issue is invoked, because two requests at once are trying to get an entity of the request token and manipulate with it (delete it). Even if we use a simple deletion JPA query:
+
+```java
+// ...
+public interface TokenRepository extends JpaRepository<Token, Integer> { 
+  void deleteByValue(String value);
+}
+```
+
+The `deleteByValue` will **extract the entity** and then delete it. Therefore, doing this operation simulatenously will cause the entity-deleted-in-another-transaction issue.
+
+The option is to use a simple SQL query, bypassing the entity creation:
+
+```java
+// ...
+public interface TokenRepository extends JpaRepository<Token, Integer> {
+  @Query(value = "delete from Token where value = ?1", nativeQuery = true)
+  void deleteByValue(String value);
+}
+```
+
+Here, we directly delete the data from the database using native SQL query.
+
+{% hint style="info" %}
+Be aware how the native SQL queries are constructed and how the arguemtn values are passed to them, as the incorrect usage may lead to susceptibility to **SQL Injection** attacks.
+{% endhint %}
 
 ## Interesting Links
 

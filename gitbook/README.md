@@ -2,6 +2,16 @@
 
 TODO Will be extended
 
+## Source codes
+
+The source codes to this pages are available via GitHub.
+
+{% embed url="https://github.com/Engin1980/7vbap-gitbook" %}
+7VBAP Source Codes
+{% endembed %}
+
+Note that the repository is still under the construction and some implementations can be available in a separate branches. If you have doubts, just ask.
+
 ## Project realization flow
 
 {% hint style="danger" %}
