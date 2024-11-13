@@ -34,8 +34,15 @@ public class Tag {
   private Collection<Url> urls;
 
   @Contract(pure = true)
-  public Tag(AppUser appUser, String title, String color) {
-    ArgVal.notNull(appUser, "user");
+  public Tag(AppUser user, String title, String color) {
+    if (user == null)
+      throw new IllegalArgumentException("User is null");
+    if (title == null || title.trim().isEmpty())
+      throw new IllegalArgumentException("Title is empty.");
+    if (color.matches("[0-9a-fA-F]{" + COLOR_LENGTH + "}"))
+      throw new IllegalArgumentException("Color does not match the specified regular expression.");
+
+    ArgVal.notNull(user, "user");
     ArgVal.notWhitespace(title, "title");
     ArgVal.matchRegex(color, "[0-9a-fA-F]{" + COLOR_LENGTH + "}", "color");
 
