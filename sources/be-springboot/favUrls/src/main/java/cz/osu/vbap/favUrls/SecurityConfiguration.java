@@ -56,6 +56,7 @@ public class SecurityConfiguration {
 
     http.authorizeHttpRequests(q -> q
             .requestMatchers("/v1/appUser/login").permitAll()
+            .requestMatchers("v1/appUser/refresh").permitAll()
             .requestMatchers("v1/appUser/logout").permitAll()
             .requestMatchers("/v1/appUser/register").permitAll()
             .requestMatchers("/**").authenticated());
