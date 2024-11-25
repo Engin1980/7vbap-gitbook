@@ -1,5 +1,5 @@
 ---
-icon: square-3
+icon: square-2
 description: >-
   This chapter explain, how basic implementation patterns are set up for further
   development, namely services and exception management, error handling, logging
@@ -9,6 +9,48 @@ description: >-
 # Basic concepts
 
 In this section, we will explain some basic building concepts used in the rest of the implementation.
+
+## Lombok
+
+Lombok is a popular Java library that reduces boilerplate code by providing annotations to automatically generate commonly used methods like getters, setters, constructors, `toString`, and more. By integrating Lombok, developers can streamline their codebase, making it cleaner and easier to maintain. It works as a compile-time tool, modifying the bytecode to include the required methods without needing them to be explicitly written in the source code.
+
+The library is particularly useful in projects that involve numerous plain old Java objects (POJOs), where boilerplate code like getters and setters can overwhelm the actual business logic. With Lombok, annotations like `@Data`, `@Builder`, or `@NoArgsConstructor` can significantly reduce the amount of code, improving readability and productivity. Lombok integrates seamlessly with most IDEs and build tools, making it a widely adopted choice in modern Java development.
+
+To enable Lombok in the project, you must add it into the `pom.xml` dependencies:
+
+```xml
+<dependency>
+    <groupId>org.projectlombok</groupId>
+    <artifactId>lombok</artifactId>
+    <version>1.18.28</version>
+    <scope>provided</scope>
+</dependency>
+```
+
+{% hint style="info" %}
+Note that once IDEA recognized that Lombok is used in the project, it shows a popup asking for _enabling annotation Lombok processor_. You should confirm this annotation allowing IDEA to process Lombok annotations. More about annotating processors and their setup see [https://www.jetbrains.com/help/idea/annotation-processors-support.html](https://www.jetbrains.com/help/idea/annotation-processors-support.html).
+{% endhint %}
+
+Then, you can use Lombok annotations to extend simple class functionalities:
+
+```java
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+
+@Data // Generates getters, setters, toString, equals, and hashCode
+@NoArgsConstructor // Generates a no-args constructor
+@AllArgsConstructor // Generates an all-args constructor
+public class User {
+    private Long id;
+    private String name;
+    private String email;
+}
+```
+
+{% embed url="https://projectlombok.org/" %}
+Project Lombok
+{% endembed %}
 
 ## Logging
 
@@ -235,7 +277,7 @@ To overcome this issue, you can comment this whole file and uncomment it once th
 
 In Spring Boot, a **service** is a component marked with the `@Service` annotation. It is typically used to encapsulate business logic. Services are part of the service layer in a layered architecture and interact with the repository layer to perform operations on the database. From the opposite side of view, they are used by other services or controllers providing them operations over the model. Commonly, services are not created directly, but are injected using Dependecy Injection (explained below) where required.
 
-```javascript
+```java
 import org.springframework.stereotype.Service;
 
 @Service
@@ -302,6 +344,35 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 Note, that every repository is automatically annotated with `@Repository` tag. Similarly to services, this tag ensures that the repository can be injected using **dependency injection** (see below).
 
+## REST API Controller
+
+In general, a **controller** is a component in software architecture that acts as an intermediary between user input and the system's logic. It receives requests, processes them (often by interacting with models or services), and returns the appropriate response. In SpringBoot, a controller offers REST API Endpoints, which can be accessed from the outside (by Front-End part of the solution) via HTTP requests (such as GET, POST, PUT, DELETE, PATCH) and returns JSON or other structured response..&#x20;
+
+A REST API Controller in Spring Boot is a class annotated with `@RestController` .
+
+```java
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/messages")
+public class MessageController {
+
+    // GET: Return a simple message
+    @GetMapping
+    public String getMessage() {
+        return "Hello, this is a simple string response!";
+    }
+
+    // POST: Accept a string and echo it back
+    @PostMapping
+    public String postMessage(@RequestBody String message) {
+        return "You sent: " + message;
+    }
+}
+```
+
+Controllers will be explained in more detail in _Controllers / REST API_ chapter.
+
 ## Dependency Injection
 
 D**ependency injection (DI)** is a design pattern used to achieve **Inversion of Control (IoC)**, which means that the responsibility of managing object creation and their dependencies is transferred to the underlying framework instead of being handled manually within the code. This helps to decouple different components of the application, making it more modular, easier to test, and maintain. Simply say, a programmer is not calling a constructor of a class, but the instance is somehow provided to him/her, already constructed.
@@ -359,8 +430,6 @@ The last code listing shows how the values are injected into private fields of a
 {% hint style="info" %}
 Although we just declared that the `@Autowired` via the constructor is the most preferred approach, in this course we stick with private field DI as it is more compact solution. Note that it is only for the simplicity. In real project, you should follow the Spring Boot suggestions.
 {% endhint %}
-
-## RestController
 
 ## DTO - Data Transfer Object
 
@@ -525,23 +594,7 @@ We:
 * do the mapping (skippnig `tokens`) - line 20,
 * do the custom mapping for tokens (expecting that `Token` is another entity and `TokenView` is its DTO wit the same behavior).
 
-## Basic Concepts in Action
-
 todo
 
-### Repository
-
-todo
-
-### Service
-
-todo
-
-### REST API Controller
-
-todo
-
-## Sidenotes
-
-TODO
+###
 

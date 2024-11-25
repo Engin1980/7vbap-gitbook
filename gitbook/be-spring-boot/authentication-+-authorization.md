@@ -1,5 +1,5 @@
 ---
-icon: square-5
+icon: square-7
 ---
 
 # Authentication + Authorization

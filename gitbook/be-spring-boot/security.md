@@ -1,5 +1,5 @@
 ---
-icon: square-4
+icon: square-6
 description: >-
   In this section, we will cover basic security settings for BE in SpringBoot
   application.

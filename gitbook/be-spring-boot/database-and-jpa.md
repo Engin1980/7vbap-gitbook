@@ -1,5 +1,5 @@
 ---
-icon: square-2
+icon: square-3
 description: >-
   This page describes the database creation and connection via JPA. Also, the
   whole implementation will be tested.

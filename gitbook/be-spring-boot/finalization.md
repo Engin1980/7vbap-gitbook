@@ -1,5 +1,5 @@
 ---
-icon: square-6
+icon: square-8
 ---
 
 # Finalization

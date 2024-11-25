@@ -5,9 +5,11 @@
 ## BE - Spring Boot
 
 * [Project creation](be-spring-boot/project-creation.md)
-* [Database & JPA](be-spring-boot/database-and-jpa.md)
+* [Main Concepts](be-spring-boot/main-concepts.md)
 * [Basic concepts](be-spring-boot/basic-concepts.md)
+* [Database & JPA](be-spring-boot/database-and-jpa.md)
 * [Services](be-spring-boot/services.md)
+* [Controllers / REST API](be-spring-boot/controllers-rest-api.md)
 * [Security](be-spring-boot/security.md)
 * [Authentication + Authorization](be-spring-boot/authentication-+-authorization.md)
 * [Finalization](be-spring-boot/finalization.md)
