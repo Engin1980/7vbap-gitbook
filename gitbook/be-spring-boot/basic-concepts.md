@@ -233,156 +233,72 @@ To overcome this issue, you can comment this whole file and uncomment it once th
 
 ## Service
 
-In Spring Boot, a **service** refers to a class that contains business logic and handles operations or calculations that the application needs to perform. It is a part of the **Service Layer** in the multi-layered architecture pattern (also known as a three-tier architecture), which is commonly used to organize the structure of enterprise applications.
+In Spring Boot, a **service** is a component marked with the `@Service` annotation. It is typically used to encapsulate business logic. Services are part of the service layer in a layered architecture and interact with the repository layer to perform operations on the database. From the opposite side of view, they are used by other services or controllers providing them operations over the model. Commonly, services are not created directly, but are injected using Dependecy Injection (explained below) where required.
 
-The service layer typically sits between the **Controller** layer (which handles HTTP requests and responses) and the **Repository** layer (which interacts with the database). In Spring Boot, services are usually annotated with `@Service` to indicate that they belong to the service layer and to allow Spring to manage them as **Spring Beans**.
+```javascript
+import org.springframework.stereotype.Service;
 
-In our project, to give all the services some working framework, will intrododuce two main things:
+@Service
+public class UserService {
+    private final UserRepository userRepository;
 
-1. _Service Exceptions_, which only can be invoked by any service - a service must invoke service exception only. A service cannot invoke non-service exceptions.
-2. `AppService` abstract class providing functionality for other  service implementations.
-
-Note again, that all services must have `@Service` annotation. Once annotated, they can be injected using **dependency injection** (see below).
-
-
-
-
-
-### Service Exceptions
-
-The idea here is let any service can invoke only service exception. If some operation in a method of a service may throw another (checked) exception, it must be encapuslated in `try-catch` block and the cause exception must be wrapped inside of some service exception. The following table introduces service exceptions (this list may be extended if required).
-
-<table><thead><tr><th width="239">Class</th><th>Explanation</th></tr></thead><tbody><tr><td>AppServiceException</td><td>Abstract service exception class. This is the parent of all service exceptions (in the meaning of inheritance). It has a non-null property <code>source</code> defining the original service invoking the exception.</td></tr><tr><td>InternalException</td><td>An exception thrown in case of internal service error. This exception is thrown, when some operation, which was expected to be processed correctly, failed. For example, database access has failed as the database is not accessible. From the REST API point of view, this exception maps to HTTP state 500.</td></tr><tr><td>BadRequestException</td><td>An exception thrown in case if the service cannot process the request due to the current state. For example, the url cannot be assigned to the inactive user. From the REST API point of view, this exception maps to HTTP state 400.</td></tr><tr><td>BadDataException</td><td>A more specific BadRequestException. This exception is thrown if the servce cannot process the request due to invalid request data. For example, email is not in the valid format, or required user does not exist. From the REST API point of view, this exception maps to HTTP state 400.</td></tr></tbody></table>
-
-The implementation of exceptions is very simple:
-
-```java
-package cz.osu.vbap.favUrls.services.exceptions;
-
-import cz.osu.vbap.favUrls.services.AppService;
-import lombok.Getter;
-
-@Getter
-public abstract class AppServiceException extends Exception {
-  private final AppService source;
-
-  public AppServiceException(AppService source, String message) {
-    super(message);
-    this.source = source;
-  }
-
-  public AppServiceException(AppService source, String message, Throwable cause) {
-    super(message, cause);
-    this.source = source;
-  }
-}
-```
-
-```java
-public class InternalException extends AppServiceException {
-  public InternalException(AppService source, String message, Throwable cause) {
-    super(source, message, cause);
-  }
-}
-```
-
-```java
-public class BadRequestException extends AppServiceException {
-  public BadRequestException(AppService service, String message) {
-    super(service, message);
-  }
-}
-```
-
-```java
-// different parent here!
-public class BadDataException extends BadRequestException {
-  public BadDataException (AppService service, String message) {
-    super(service, message);
-  }
-}
-```
-
-### AppService class
-
-`AppService` abstract class is a parent class for all services. It is used also as a parent type for the `source` property in the `AppServiceException`.
-
-{% code lineNumbers="true" %}
-```java
-package cz.osu.vbap.favUrls.services;
-
-import cz.osu.vbap.favUrls.lib.ArgVal;
-import cz.osu.vbap.favUrls.services.exceptions.InternalException;
-import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.function.Supplier;
-
-public abstract class AppService {
-
-  @Getter
-  protected final Logger logger = LoggerFactory.getLogger(this.getClass());
-
-  protected void tryInvoke(Runnable runnable) throws InternalException {
-    ArgVal.notNull(runnable, "runnable");
-    try {
-      runnable.run();
-    } catch (Exception e) {
-      logger.error("Error in 'tryInvoke'", e);
-      throw new InternalException(this, "Error in 'tryInvoke'", e);
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
-  }
 
-  protected <T> T tryInvoke(Supplier<T> supplier) throws InternalException {
-    T ret;
-    ArgVal.notNull(supplier, "supplier");
-    try {
-      ret = supplier.get();
-    } catch (Exception e) {
-      logger.error("Error in 'tryInvoke'", e);
-      throw new InternalException(this, "Error in 'tryInvoke'", e);
+    public User getUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
     }
-    return ret;
-  }  
-}
-```
-{% endcode %}
 
-The class contains a logger (line 13/14), which is also published via getter as public. The reason to publish the logger outside is its usage in `AppServiceAspect` defined above.
+    public User createUser(User user) {
+        return userRepository.save(user);
+    }
 
-The class also contains two complex overloads of a method `tryInvoke()`. The purpose of this method is to easily encapsulate the call of a content, which can throw an exception - typically a database operation. It allows the descendant to avoid the complex `try-catch` sequence and potentional incorrect exception handling (see below). The upper overload (lines 16-24) does not return a value, the lower overload (lines 26-36) is a generic method returning a value specified by a generic parameter.
-
-```java
-// original method call without "tryInvoke()"
-// a programmer must catch the exception on his/her own
-// moreover, he may throw incorrect exception
-public void deleteCustom(int urlId) throws AppServiceException {
-  try {
-    urlRepository.deleteById(urlId);
-  } catch (Exception e) {
-    throw new InternalException(this, "Error in 'deleteCustom'", e);
-  }
+    public void deleteUser(Long id) {
+        if (!userRepository.existsById(id)) {
+            throw new UserNotFoundException("User not found with id: " + id);
+        }
+        userRepository.deleteById(id);
+    }
 }
 ```
 
-```java
-// improved behavior
-// invocation of "dangerous" method using "tryInvoke()"
-// not try-catch needed
-// invocation is passed as a lambda
-public void delete(int urlId) throws AppServiceException {
-  tryInvoke(() -> urlRepository.deleteById(urlId));
-}
-```
+The service uses `userRepository` set in the constructor. The service instance is provided by dependency injection - therefore, the instance is typically created by SpringBoot container and is not created directly. As the SpringBoot container invokes the service constructor, all its parameters must be injectable by dependency injection too.
 
-The more examples will be seen once the services are implemented.
+Services will be explained in more detail in _Services_ chapter.
 
-## Repository
+## Repository + Entity
 
 Repositories has been already introduced in the previous chapter.
 
 In Spring Boot, a **repository** is a class or interface responsible for handling data access logic, often using a framework like **Spring Data JPA** to interact with databases. Repositories are part of the **Data Access Layer** in a typical three-layered architecture (Controller-Service-Repository) and focus solely on database operations such as querying, saving, updating, and deleting entities.
+
+Every repository is tighly coupled with the **entity** - and object representing a data in a database table. The repository then provides CRUDL operations for this database table/entity.
+
+```java
+// ...
+
+@Getter
+@Setter
+@Entity
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String name;
+    private String email;
+}
+```
+
+```java
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface UserRepository extends JpaRepository<User, Long> {
+    // Custom query methods (optional)
+    User findByEmail(String email);
+}
+```
 
 Note, that every repository is automatically annotated with `@Repository` tag. Similarly to services, this tag ensures that the repository can be injected using **dependency injection** (see below).
 
