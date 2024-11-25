@@ -4,58 +4,23 @@ icon: square-4
 
 # Services
 
-## Explanation
-
-In Spring Boot, a **service** is a component marked with the `@Service` annotation. It is typically used to encapsulate business logic. Services are part of the service layer in a layered architecture and interact with the repository layer to perform operations on the database. From the opposite side of view, they are used by other services or controllers providing them operations over the model.
-
-A simple service may look like:
-
-import org.springframework.stereotype.Service;
-
-@Service public class UserService { private final UserRepository userRepository;
-
-```java
-import org.springframework.stereotype.Service;
-
-@Service
-public class UserService {
-    private final UserRepository userRepository;
-
-    public UserService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
-
-    public User getUserById(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
-    }
-
-    public User createUser(User user) {
-        return userRepository.save(user);
-    }
-
-    public void deleteUser(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new UserNotFoundException("User not found with id: " + id);
-        }
-        userRepository.deleteById(id);
-    }
-}
-```
-
-The service uses `userRepository` set in the constructor. The service instance is provided by dependency injection - therefore, the instance is typically created by SpringBoot container and is not created directly. As the SpringBoot container invokes the service constructor, all its parameters must be injectable by dependency injection too.
-
-
-
-
-
-
-
-## New
+## About Services
 
 In Spring Boot, a **service** refers to a class that contains business logic and handles operations or calculations that the application needs to perform. It is a part of the **Service Layer** in the multi-layered architecture pattern (also known as a three-tier architecture), which is commonly used to organize the structure of enterprise applications.
 
 The service layer typically sits between the **Controller** layer (which handles HTTP requests and responses) and the **Repository** layer (which interacts with the database). In Spring Boot, services are usually annotated with `@Service` to indicate that they belong to the service layer and to allow Spring to manage them as **Spring Beans**.
+
+Moreover, as services can be dependent on other services or repositories, the dependent instances are also provided (directly or via constructor) using Spring Beans and dependency injection.
+
+```java
+@Service
+public class UserService {
+  @Autowired
+  private UserRepository userRepository;  
+
+  // methods of the service
+}
+```
 
 In our project, to give all the services some working framework, will intrododuce two main things:
 
@@ -254,9 +219,6 @@ The code is quite simple. Main notes:
 * `create(...)` will try to obtain an user from the repository. If the user has not been found, `BadRequest` exeception is invoked. If the user was found, new `Url` entity is created and stored;
 * similarly, the rest of methods are implemented.
 
-## More Services
-
-More services can be created on request.
-
+{% hint style="info" %}
 One more complex service is `AuthenticationService` created in the chapter aiming at _Security_.
-
+{% endhint %}

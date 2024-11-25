@@ -50,9 +50,11 @@ Note that every controller/endpoint must have unique URL. If there are multiple 
 
 Once the controller class is created, we can continue with controllers endpoints.
 
-### Creating End-Points
+### Creating the Endpoints
 
-An **endpoint** represents and entry point into the application, over which an HTTP request can be invoked. The endpoints are created in a `@RestController` by defining a **HTTP-method** (see the table below)  and the target URL. In no URL is specified for the endpoint, the owning controller's url is used.
+An **endpoint** represents and entry point into the application, over which an HTTP request can be invoked. The endpoints are created in a `@RestController` by defining a **HTTP-method** (see the table below)  and the target URL.&#x20;
+
+The target endpoint URL is a combination of server's URL, controller's URL (specified in the `@RequestMapping` annotation) and endpoints's URL (specified in `@Get/Post/...Mapping` or `@RequestMapping` annotation). If no URL is specified either at controller's or endpoint's level, the URL of the server is used.
 
 <table><thead><tr><th width="162">HTTP  Method</th><th width="216">Spring Boot Annotation</th><th>Common Usage</th></tr></thead><tbody><tr><td>GET</td><td><code>@GetMapping</code></td><td>Used to retrieve data from the server. Often used for fetching resources or querying information (e.g., <code>GET /user/list</code>).</td></tr><tr><td>POST</td><td><code>@PostMapping</code></td><td>Used to submit data to the server, often for creating resources or performing actions (e.g., <code>POST /user</code>).</td></tr><tr><td>PUT</td><td><code>@PutMapping</code></td><td>Used to update an existing resource with the data in the request body (e.g., <code>PUT /user/{id}</code>).</td></tr><tr><td>PATCH</td><td><code>@PatchMapping</code></td><td>Used to make partial updates to an existing resource (e.g., <code>PATCH /user/{id}</code>).</td></tr><tr><td>DELETE</td><td><code>@DeleteMapping</code></td><td>Used to delete a resource (e.g., <code>DELETE /user/{id}</code>).</td></tr></tbody></table>
 
@@ -60,7 +62,32 @@ An **endpoint** represents and entry point into the application, over which an H
 Note that all above mentioned annotations can be replaced with `@RequestMapping(method=RequestMethod....)` annotation.
 {% endhint %}
 
-TODO
+If endpoint call is completed, typically, a HTTP status code, return body (and optionaly additional data, like cookies) are returned.&#x20;
+
+{% hint style="info" %}
+HTTP status codes are three-digit numbers indicating the outcome of an HTTP request. These codes are grouped into categories:&#x20;
+
+* informational (`1xx`),&#x20;
+* success (`2xx`),
+* redirection (`3xx`),
+* client errors (`4xx`) and
+* server errors (`5xx`).&#x20;
+
+The most common ones are `200 OK` (successful request), `404 Not Found` (requested resource is unavailable), and `500 Internal Server Error` (something went wrong on the server). Other notable codes include `301 Moved Permanently` for redirection, `400 Bad Request` for malformed requests, `401 Unauthorized` when authentication is required or `403 Forbidden` when authentication is done, but authorization fails (resource is unavailable for the current user).&#x20;
+{% endhint %}
+
+{% embed url="https://developer.mozilla.org/en-US/docs/Web/HTTP/Status" %}
+HTTP Status Codes
+{% endembed %}
+
+The HTTP status code and the result is specified by the return type of the endpoint's method. As we are using`@RestController` annotation, the returning value is automatically wrapped into the JSON. Commonly, there are two options to return the value:
+
+* common type (like `int`, `string` or any class) or `void` - when autowrapping to JSON shoudl be used; moreover, the returned status code is always `200`, or
+* `ResponseEntity<T>` when custom return code is required. Here, a programmer specifies the return HTTP code together with the response body to customise the behavior.
+
+{% hint style="info" %}
+As we will use exception handling to manage the illegal states during endpoints evaluation, we will stick with the first option and return errorneous HTTP status codes in exception handlers.
+{% endhint %}
 
 ### Passing data to a controller's endpoints
 
@@ -187,27 +214,132 @@ public class CookieController {
 }
 ```
 
-## UrlController
+## Exception Handling
 
-asef
+This section describes how exceptions invoked during endpoint processing are handled in SpringBoot. In general, you have two options:
+
+* use custom `try-catch` blocks;
+* use `@ControllerAdvice`and custom exception handler.
+
+### Catching using try-catch
+
+If you are familiar with the `try-catch` construct, you can always wrap any call inside the endpoint with it and use common exception handling, like:
+
+{% code lineNumbers="true" %}
+```java
+@PutMapping("/{urlId}")
+public ResponseEntity<UrlView> updateUrl(@PathVariable int urlId, 
+            String title, 
+            String address) throws AppServiceException {
+  ResponseEntity<UrlView> ret;
+  try {
+    Url url = urlService.update(urlId, title, address);
+    UrlView tmp = UrlView.of(url);
+    ret = ResponseEntity.ok(tmp);
+  } catch (BadRequestException ex) {
+    ret = ResponseEntity.badRequest().build();
+  } catch (Exception ex) {
+    return ResponseEntity.internalServerError().build();
+  }
+  return ret;
+}
+```
+{% endcode %}
+
+In this case, we will return an instance of `ResponseEntity` as we need to handle exceptions and return custom HTTP status codes if required:
+
+* firstly, we try to update the entity and return the entity with `OK` code - lines 7-9;
+* if `BadRequestException` is thrown, the response is returning `400 Bad Request`;
+* if any other exception is thrown, the response is returning `500 Internal Server Error`.
+
+Although this approach is quite straighforward, it has some disadvantages, mainly:
+
+* you are extending your code with the `try-catch` wrapping blocks;
+* you are forced to handle the exception typically using repetitive code in catch blocks;
+* the return type `ResponseEntity<UrlView>` will not be sufficient if you need to return some non-UrlView data, as the body is expected tobe stricly the `UrlView` instance and your error info may be a string or a custom error type; therefore, you will have to lift up the type to something like `ResponseEntity<Object>`;
+* you will not be able catch issues thrown before the endpoint is invoked - bad typing, conversion errors, etc.
+
+Therefore, the second approach based on `@ControllerAdvice` and custom exception handler is preferred.
+
+### Custom @ControllerAdvice exception handler
+
+In this approach, we create a class. In this class, we create methods, where each method is handling a specific exception type. The code may look like this:
 
 ```java
 package cz.osu.vbap.favUrls.controllers;
 
-import cz.osu.vbap.favUrls.controllers.dto.UrlView;
-import cz.osu.vbap.favUrls.controllers.exceptions.ForbiddenException;
-import cz.osu.vbap.favUrls.model.entities.Url;
-import cz.osu.vbap.favUrls.services.UrlService;
-import cz.osu.vbap.favUrls.services.exceptions.AppServiceException;
-import cz.osu.vbap.favUrls.services.exceptions.InvalidOrExpiredCredentialsException;
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpRequest;
-import org.springframework.web.HttpRequestHandler;
-import org.springframework.web.bind.annotation.*;
+// ...
 
-import java.util.Collection;
-import java.util.List;
+@ControllerAdvice
+public class ApiExceptionHandler {
+
+  @ExceptionHandler(BadRequestException.class)
+  public ResponseEntity<ErrorView> badRequestException(BadRequestException e, WebRequest request) {
+    ResponseEntity<ErrorView> ret = new ResponseEntity<>(
+            new ErrorView(e.getMessage()),
+            HttpStatus.BAD_REQUEST);
+    return ret;
+  }
+
+  @ExceptionHandler(BadDataException.class)
+  public ResponseEntity<ErrorView> badDataException(BadDataException e, WebRequest request) {
+    ResponseEntity<ErrorView> ret = new ResponseEntity<>(
+            new ErrorView(e.getMessage()),
+            HttpStatus.BAD_REQUEST);
+    return ret;
+  }
+
+  @ExceptionHandler(InternalException.class)
+  public ResponseEntity<Error> internalServerException(InternalException e, WebRequest request) {
+    ResponseEntity<Error> ret = new ResponseEntity<>(
+            new Error("Internal service error."),
+            HttpStatus.INTERNAL_SERVER_ERROR
+    );
+    return ret;
+  }
+
+  // when URL is not ok
+  @ExceptionHandler(NoResourceFoundException.class)
+  public ResponseEntity<Error> exception(NoResourceFoundException e, WebRequest request) {
+    ResponseEntity<Error> ret = new ResponseEntity<>(
+            new Error("Invalid request - path.", null),
+            HttpStatus.NOT_FOUND
+    );
+    return ret;
+  }
+
+  // when URL is ok, but data params does not match
+  @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+  public ResponseEntity<Error> exception(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException e, WebRequest request) {
+    ResponseEntity<Error> ret = new ResponseEntity<>(
+            new Error("Invalid request - data.", null),
+            HttpStatus.NOT_FOUND
+    );
+    return ret;
+  }
+
+  // ...
+}
+```
+
+This is a simple class annotated with `@ControllerAdvice` annotation.
+
+Then, we create a function for every catched exception. This function is annotated with `@ExceptionHandler` annotation containing the definition of the captured type. Moreover, this method has the parameter of the same type containing the object of the thrown exception.&#x20;
+
+In the method, we handle the exception. Typically, we log the exception and return the required HTTP status code together with error describing body.
+
+## UrlController - demo implementation
+
+Here, we provide the full implementation of our `UrlController` providing REST API endpoints to work with URLs. The expected endpoints are summarized in the following table:
+
+<table><thead><tr><th width="212">Endpoint</th><th width="118">Params</th><th width="115">Returns</th><th>Description</th></tr></thead><tbody><tr><td>POST /v1/url</td><td>appUserId, title, address</td><td>UrlView</td><td>Creates a new URL and returns it's DTO representation</td></tr><tr><td>GET /v1/url/{appUserId}</td><td>appUserId</td><td>UrlView</td><td>Returns List of DTO of the URLs by ID of the owning user</td></tr><tr><td>DELETE /v1/url/{urlId}</td><td>urlId</td><td>(nothing)</td><td>Deletes the URL by ID</td></tr></tbody></table>
+
+The implementatoin follows. Again, a good practice is to place controllers together - in our case, the target folder will be `/src/main/java/...favUrls/controllers`:
+
+```java
+package cz.osu.vbap.favUrls.controllers;
+
+//...
 
 @RestController
 @RequestMapping("/v1/url")
@@ -243,7 +375,11 @@ public class UrlController  {
 }
 ```
 
+You can see that:
 
+* most of the endpoints are simply using the service methods to reach required functionality;
+* if some error occurs, it is "handled" by throwing the corresponding exception. The exception will be handled by `@ExceptionHandler` in `@ControllerAdvice`.
 
-ates
-
+{% hint style="info" %}
+There is a read out of attribute `__appUserId` in the listing. This attribute will be added in every request later, during authorization implementation - for more info, look at the chapter related to "Authentcation & Authorization". Note that this behavior is not the default SpringBoot implementation.
+{% endhint %}
