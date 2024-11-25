@@ -7,6 +7,7 @@
 * [Project creation](be-spring-boot/project-creation.md)
 * [Database & JPA](be-spring-boot/database-and-jpa.md)
 * [Basic concepts](be-spring-boot/basic-concepts.md)
+* [Services](be-spring-boot/services.md)
 * [Security](be-spring-boot/security.md)
 * [Authentication + Authorization](be-spring-boot/authentication-+-authorization.md)
 * [Finalization](be-spring-boot/finalization.md)
