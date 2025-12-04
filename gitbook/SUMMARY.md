@@ -28,3 +28,7 @@
 ## FE - Angular
 
 * [Page 4](fe-angular/page-4.md)
+
+## General Topics
+
+* [CORS - Cross-Origin Resource Sharing](general-topics/cors-cross-origin-resource-sharing.md)

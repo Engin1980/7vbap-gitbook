@@ -1,8 +1,8 @@
 ---
-icon: square-5
 description: >-
   Here we describe how authentication is handled and the logged user is stored
   at the front end side.
+icon: square-5
 ---
 
 # Authentication
@@ -15,8 +15,7 @@ Note this chapter is a place where things are getting a bit complicated. Please 
 
 ## How Logged User is stored
 
-This chapter is stronly dependent on `useContext` React hook. We suggest to study this hook first before reading the rest of this implementation.\
-
+This chapter is stronly dependent on `useContext` React hook. We suggest to study this hook first before reading the rest of this implementation.<br>
 
 {% embed url="https://react.dev/reference/react/useContext" %}
 useContext Hook in React
