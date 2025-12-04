@@ -25,7 +25,7 @@ As the domain, we are creating application users. Every user can have multiple f
 
 The following schema should look like on the next image.
 
-![Proposed (and estimated) database schema](../.gitbook/assets/db-schema.png)
+![Proposed (and estimated) database schema](/broken/files/QAlqxl1TaZy8hRINiDPM)
 
 {% hint style="warning" %}
 Note that the real database schema will be created by JPA tool. It may not (and probably will not) match exactly the proposed schema. The proposed schema on the image above is only for the illustration.
@@ -62,7 +62,7 @@ To create the database connection in IDEA:
 3. From the list of available database select the requested one (`MariaDB`in our case).
 4. In the opened window, submit the required connection data:
 
-![Creation of DB connection in IntelliJ IDEA](../.gitbook/assets/db-idea.png)
+![Creation of DB connection in IntelliJ IDEA](/broken/files/6CBuaynSzEGcnSFdZj8z)
 
 You should enter:
 
@@ -810,7 +810,7 @@ JPA Buddy website
 
 Idea in Ultimate edition has already installed _Flyway_ plugin already. Check if the plugin is among your active plugins, or install it if necessary.
 
-![Flyway plugin in IDEA](../.gitbook/assets/idea-flyway.png)
+![Flyway plugin in IDEA](/broken/files/pIaJAJUnRkBDb604Ugde)
 
 ### Adding Flyway support to the project
 
@@ -894,15 +894,15 @@ Now, we can create a first migration - from the empty state to the state with re
 
 Open the context menu over IDEA database connection and select _Create Flyway Migration..._:
 
-![Creation of the new migration in IDEA](../.gitbook/assets/idea-create-migration-I.png)
+![Creation of the new migration in IDEA](/broken/files/rEBb1ZapRgGV6gviZIYv)
 
 The new window will appear with the source and target definition. As a source (the required state) we address the current entities definitions in the project (set by default). As a target (current state of the model) we address a current database state, which is now empty (set by defualt). Then we confirm the dialog.
 
-![Initial migration dialog in IDEA](../.gitbook/assets/idea-create-migration-II.png)
+![Initial migration dialog in IDEA](/broken/files/bXNiEXsGCP7t9h0HROVJ)
 
 A new window - Migration Preview Window - will appear. Here we check the correctness of the generated SQL script and **set the migration name**. Then name should contain the version number (generated automatically) and a description of the migration operation:
 
-![Migration Preview Window](../.gitbook/assets/idea-create-migration-III.png)
+![Migration Preview Window](/broken/files/w1Zrh1gi5QWDSFm0NcD8)
 
 Once confirmed, there will be a new file in the `.../db/migrations` folder. The generated content of the file `V1__create_AppUser.sql` is:
 

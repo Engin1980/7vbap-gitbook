@@ -29,7 +29,7 @@ In IDE, select _File -> New -> Project_.
 
 In the opened window select _Spring Boot_.
 
-![Project creation - set up](../.gitbook/assets/project.png)
+![Project creation - set up](/broken/files/QQBicChsumkcBP5QEDTb)
 
 Set:
 
@@ -44,7 +44,7 @@ Set:
 * set Java version to 23,
 * choose packaging to JAR.
 
-![Project creation - dependencies](../.gitbook/assets/dependencies.png)
+![Project creation - dependencies](/broken/files/dG3aYjtrWEsIq0spYVHm)
 
 On the next page, you will select the added dependencies (libraries) (those can be adjusted later). At the beginning, we will need:
 
@@ -57,7 +57,7 @@ On the next page, you will select the added dependencies (libraries) (those can 
 In newest IDEA editions, you can simply adjust the preset dependencies by opening the `pom.xml` file and selecting `Edit starters` from the `<dependencies>` section.
 {% endhint %}
 
-![Updating SpringBoot dependencies](../.gitbook/assets/add-starters.png)
+![Updating SpringBoot dependencies](/broken/files/lgUekaL0yaGqteIrS0TT)
 
 The most important technologies will be explained now.
 
@@ -114,7 +114,7 @@ To add the Lombok library into the project, you must add the dependency into Mav
 
 Then, you need to enable Lombok preprocessing support in IDEA in project settings (_File -> Settings_) and selecting _Build, Execution, Deployment -> Compiler -> Annotation Processors -> Enable annotation processing (checked) + Obtain processors from class path_.
 
-![Set up Lombok annotation](../.gitbook/assets/lombok.png)
+![Set up Lombok annotation](/broken/files/XuQV6GS04vW4BcIygpN0)
 
 {% embed url="https://projectlombok.org/" %}
 Project Lombok Website

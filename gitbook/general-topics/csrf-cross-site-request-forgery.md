@@ -1,4 +1,4 @@
-# CSRF
+# CSRF - Cross-Site Request Forgery
 
 Cross-Site Request Forgery (CSRF) is a type of web security attack where a malicious website tricks a user’s browser into performing unwanted actions on another site where the user is already authenticated. Because **browsers automatically include cookies and session tokens with requests**, an attacker can exploit this by making the victim’s browser send requests (like transferring money, changing account settings, or posting data) without the user’s knowledge. In essence, CSRF takes advantage of the trust a web application has in the user’s browser, making it appear as though the user intentionally initiated the action. Proper defenses, such as CSRF tokens or same-site cookie settings, are used to prevent these unauthorized requests. The schema is as follows:
 
@@ -9,7 +9,7 @@ Cross-Site Request Forgery (CSRF) is a type of web security attack where a malic
 5. **Site A processes the request** Because Site A sees a valid cookie, it assumes the request is legitimate and executes the action (e.g., transferring money, changing account settings).
 6. **Result: unintended action** The user’s account on Site A is modified without their knowledge or consent, completing the CSRF attack.
 
-![CSRF Illustration](imgs/csrf.jpg)
+![CSRF Illustration](../.gitbook/assets/csrf.jpg)
 
 ## Mitigating CSRF attacks
 
@@ -41,6 +41,10 @@ Alternatively, the **double-submit cookie principle** can be used: In this appro
 * **SameSite=Lax** - Cookies are sent for same-site requests and for top-level navigation (like clicking a link), but not for background requests (like images or iframes). Moreover, those requests must use safe HTTP methods (like GET). This is a balanced default that protects against most CSRF attacks while allowing common user flows (like opening the link from e-mail to view product).
 * **SameSite=None** - Cookies are sent with all requests, including cross-site ones, but must also be marked as `Secure` (only sent over HTTPS). This is necessary for scenarios like third-party APIs or embedded content, but it reintroduces CSRF risks if not combined with other protections.
 
-![SameSite cookie behavior demonstration](imgs/samesite.jpg)
+![SameSite cookie behavior demonstration](../.gitbook/assets/samesite.jpg)
 
 By configuring `SameSite` correctly, developers reduce the chance that a malicious site can trick a user’s browser into sending cookies to another domain without their knowledge. It’s a simple but powerful layer of defense against CSRF.
+
+{% hint style="info" %}
+**Important note:** If you set SameSite=None, you must also set the **Secure** attribute (cookie is only sent over HTTPS), otherwise modern browsers will refuse to store the cookie at all.
+{% endhint %}
