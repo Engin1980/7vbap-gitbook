@@ -32,5 +32,5 @@
 ## General Topics
 
 * [CORS - Cross-Origin Resource Sharing](general-topics/cors-cross-origin-resource-sharing.md)
-* [CSRF](general-topics/csrf.md)
+* [CSRF - Cross-Site Request Forgery](general-topics/csrf-cross-site-request-forgery.md)
 * [XSS - Cross-Site Scripting](general-topics/xss-cross-site-scripting.md)
