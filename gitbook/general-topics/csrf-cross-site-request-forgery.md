@@ -41,4 +41,6 @@ Alternatively, the **double-submit cookie principle** can be used: In this appro
 * **SameSite=Lax** - Cookies are sent for same-site requests and for top-level navigation (like clicking a link), but not for background requests (like images or iframes). Moreover, those requests must use safe HTTP methods (like GET). This is a balanced default that protects against most CSRF attacks while allowing common user flows (like opening the link from e-mail to view product).
 * **SameSite=None** - Cookies are sent with all requests, including cross-site ones, but must also be marked as `Secure` (only sent over HTTPS). This is necessary for scenarios like third-party APIs or embedded content, but it reintroduces CSRF risks if not combined with other protections.
 
+![SameSite cookie behavior demonstration](imgs/samesite.jpg)
+
 By configuring `SameSite` correctly, developers reduce the chance that a malicious site can trick a user’s browser into sending cookies to another domain without their knowledge. It’s a simple but powerful layer of defense against CSRF.
