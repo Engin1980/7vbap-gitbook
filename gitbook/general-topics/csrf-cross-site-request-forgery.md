@@ -9,7 +9,7 @@ Cross-Site Request Forgery (CSRF) is a type of web security attack where a malic
 5. **Site A processes the request** Because Site A sees a valid cookie, it assumes the request is legitimate and executes the action (e.g., transferring money, changing account settings).
 6. **Result: unintended action** The user’s account on Site A is modified without their knowledge or consent, completing the CSRF attack.
 
-![CSRF Illustration](imgs/csrf.png)
+![CSRF Illustration](imgs/csrf.jpg)
 
 ## Mitigating CSRF attacks
 
