@@ -31,6 +31,7 @@
 
 ## General Topics
 
+* [User Registration / Password Management / IdP](general-topics/user-registration-password-management-idp.md)
 * [User Authentication - Session / JWT](general-topics/user-authentication-session-jwt.md)
 * [CORS - Cross-Origin Resource Sharing](general-topics/cors-cross-origin-resource-sharing.md)
 * [CSRF - Cross-Site Request Forgery](general-topics/csrf-cross-site-request-forgery.md)
