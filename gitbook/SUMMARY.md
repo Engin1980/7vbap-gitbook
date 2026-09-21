@@ -5,7 +5,8 @@
 ## Concepts
 
 * [Backend](concepts/backend.md)
-* [Common Backend Technologies](concepts/common-backend-technologies.md)
+* [Common Backend Techniques and Technologies](concepts/common-backend-techniques-and-technologies.md)
+* [Common Frontend Techniques](concepts/common-frontend-techniques.md)
 
 ## BE - Spring Boot
 

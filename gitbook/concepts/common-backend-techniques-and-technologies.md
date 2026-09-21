@@ -1,4 +1,4 @@
-# Common Backend Technologies
+# Common Backend Techniques and Technologies
 
 ## Infractructure
 
@@ -99,3 +99,5 @@ Networking enables communication between applications, services, users, and infr
 Key networking concepts include service discovery, load balancing, ingress controllers, DNS resolution, and network policies. Service discovery allows applications to find each other dynamically, while load balancing distributes traffic across multiple service instances. Network policies provide security by controlling which services are allowed to communicate with each other.
 
 A properly designed network architecture ensures reliable communication, security, scalability, and high availability of applications running in modern cloud-native environments.
+
+##
