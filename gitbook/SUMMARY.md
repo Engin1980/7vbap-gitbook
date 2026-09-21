@@ -2,6 +2,11 @@
 
 * [Introduction & Motivation](README.md)
 
+## Concepts
+
+* [Backend](concepts/backend.md)
+* [Common Backend Technologies](concepts/common-backend-technologies.md)
+
 ## BE - Spring Boot
 
 * [Project creation](be-spring-boot/project-creation.md)
