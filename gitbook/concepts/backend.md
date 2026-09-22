@@ -2,7 +2,7 @@
 
 _Backend_ is the part of an application that operates behind the user interface and is responsible for processing data, executing business logic, and communicating with external systems. While users interact with the _frontend_ through a web browser, desktop application, or mobile application, the _backend_ performs the operations required to make the application function correctly.
 
-TODO IMG
+![Frontend vs. Backend](./imgs/backend.jpg)
 
 A typical software system can be divided into two major parts: the frontend and the backend. The frontend is responsible for presenting information to the user and collecting user input. The backend receives requests from the frontend, processes them according to the application's rules, and returns the appropriate results. For example, when a user submits a login form, the frontend sends the entered credentials to the backend, which verifies them against stored user data and decides whether access should be granted.
 
@@ -24,7 +24,7 @@ In summary, the backend can be understood as the operational core of an applicat
 
 Understanding the backend architecture is important when working on the system. It is very common, that for the historical reasons and the backward compatibility, the original backend implementation is hidden behind a facade pattern, which provides a new, updated interface to the underlying functionality. This abstraction isolates consumers from internal implementation details and reduces the impact of changes within the legacy codebase.
 
-TODO IMG
+![Legacy Backend Facading](./imgs/backend-legacy.jpg)
 
 The new backend is generated around this facade layer rather than replacing it directly. As a result, the facade serves as the integration point between the existing implementation and the newly generated components. A solid understanding of the facade's responsibilities and exposed interfaces is therefore essential for extending, maintaining, or troubleshooting the system. Any modifications to the generation process or surrounding architecture must take into account the contractual behavior provided by the facade to ensure compatibility with both existing and newly generated functionality.&#x20;
 
