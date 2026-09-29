@@ -10,6 +10,7 @@
 ## BE - Spring Boot
 
 * [Introduction](be-spring-boot/introduction.md)
+* [Spring Initializr](be-spring-boot/spring-initializr.md)
 * [Project creation](be-spring-boot/project-creation.md)
 * [Basic concepts](be-spring-boot/basic-concepts.md)
 * [Database & JPA](be-spring-boot/database-and-jpa.md)
