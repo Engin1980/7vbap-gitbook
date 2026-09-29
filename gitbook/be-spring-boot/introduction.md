@@ -84,13 +84,31 @@ Today, Spring Boot is considered one of the most popular frameworks for backend 
 * **Reduced Configuration Complexity**\
   By combining automatic dependency resolution, starter packages, and predefined version compatibility rules, Spring Boot significantly lowers the amount of configuration required to start a new project. Developers can focus on implementing business functionality instead of managing infrastructure libraries and framework dependencies.
 
-#### Simplified Deployment
+### Auto-Configuration
+
+One of the most important features of Spring Boot is **auto-configuration**. Auto-configuration is a mechanism that automatically configures application components based on the libraries available on the classpath, application settings, and the current runtime environment. Its goal is to reduce the amount of manual configuration required to start and run an application.
+
+In traditional Spring applications, developers often had to explicitly define and configure many infrastructure components, such as web servers, database connections, transaction managers, security providers, JSON serializers, and messaging clients. Spring Boot analyzes the project's dependencies during startup and automatically creates appropriate configuration objects when possible.
+
+For example, if the application contains the `spring-boot-starter-web` dependency, Spring Boot automatically configures an embedded web server, HTTP request processing, JSON serialization, and other components required for a web application. Similarly, if a database driver and database configuration properties are present, Spring Boot automatically configures a datasource, connection pooling, and transaction management.
+
+The auto-configuration mechanism follows the principle of **convention over configuration**. Instead of requiring developers to explicitly configure every aspect of the system, Spring Boot provides sensible defaults that work for the majority of use cases. This significantly reduces boilerplate code and allows developers to focus on business functionality.
+
+Another important characteristic is that auto-configuration is not mandatory. Developers can override any automatically configured component whenever custom behavior is required. Spring Boot therefore provides both simplicity for common scenarios and flexibility for advanced use cases. The framework first attempts to provide a default configuration and then allows application-specific definitions to take precedence when necessary.
+
+The benefits of auto-configuration include faster project setup, reduced configuration complexity, fewer opportunities for configuration errors, and improved developer productivity. Combined with starter dependencies and embedded runtime components, auto-configuration enables developers to create fully functional applications with minimal initial effort while still retaining full control over the final application architecture.
+
+### Simplified Deployment
 
 One of the major advantages of Spring Boot is its simplified deployment model. Traditional Java enterprise applications often require developers and administrators to perform many manual configuration tasks before an application can be executed. These tasks typically include installing and configuring an application server, installing database drivers, setting up database connections, configuring connection pools, managing library dependencies, building the application, executing tests, and finally deploying the application and its supporting components.
 
 Spring Boot significantly reduces this complexity through auto-configuration, embedded servers, dependency management, and convention-over-configuration principles. Application servers such as Tomcat can be included directly within the application, eliminating the need for separate server installation and configuration. Database drivers are automatically managed through Maven or Gradle dependencies, and database connectivity can often be configured using only a few configuration properties. Connection pooling is provided out of the box through integrated solutions such as HikariCP, requiring little or no additional setup.
 
-The build process is also simplified because Spring Boot integrates seamlessly with modern build tools and testing frameworks. Dependencies are automatically resolved, compatible versions are selected, and applications can be packaged as self-contained executable JAR files. As a result, deployment often consists of copying a single artifact and starting it with a Java command. This streamlined approach reduces operational overhead, shortens deployment times, minimizes configuration errors, and enables developers to focus on business functionality rather than infrastructure management.
+A particularly important feature is Spring Boot's ability to package an application as a **single executable JAR file**. This artifact contains not only the application code, but also all required framework libraries and third-party dependencies. As a result, developers do not need to deploy multiple JAR files or manually resolve dependency issues on the target environment. This approach effectively eliminates many of the problems traditionally associated with dependency conflicts, often referred to as _JAR hell_.
+
+In addition, the executable JAR contains an **embedded runtime container**, such as Tomcat, Jetty, or Undertow. The application therefore becomes a **self-contained deployment unit** that does not depend on a separately installed application server. Running the application usually requires nothing more than a compatible Java Runtime Environment and a single startup command. The same artifact can be used consistently across development, testing, and production environments, improving deployment reliability and reducing environment-specific issues.
+
+The build process is also simplified because Spring Boot integrates seamlessly with modern build tools and testing frameworks. Dependencies are automatically resolved, compatible versions are selected, and applications can be packaged in a standardized manner. Together, these features reduce operational overhead, shorten deployment times, minimize configuration errors, and allow development teams to focus on business functionality rather than infrastructure management.
 
 ## Spring Boot Starters
 
