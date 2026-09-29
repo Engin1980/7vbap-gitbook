@@ -111,13 +111,11 @@ As a result, the choice between Maven and Gradle is rarely a technical limitatio
 
 **Java** and **Kotlin** are modern programming languages that run on the Java Virtual Machine (JVM). Both can use the same libraries, frameworks, and tools, including Spring Boot. Kotlin was created by JetBrains to address some of the limitations of Java, primarily by reducing boilerplate code and improving developer productivity. Today, both languages are fully supported by Spring Boot and are commonly used for backend development.
 
-#### Simple Example
-
 The following example defines a simple class representing a user.
 
 **Java**
 
-```
+```java
 public class User {
 
     private final String name;
@@ -140,7 +138,7 @@ public class User {
 
 **Kotlin**
 
-```
+```kotlin
 data class User(
     val name: String,
     val age: Int
@@ -149,7 +147,7 @@ data class User(
 
 Both classes provide the same functionality, but the Kotlin version is significantly shorter because the language can automatically generate constructors, getters, `equals()`, `hashCode()`, and `toString()` methods.
 
-#### Java Advantages
+### Java Advantages
 
 * Mature language with a large ecosystem and community.
 * Extensive documentation, tutorials, and enterprise adoption.
@@ -158,7 +156,7 @@ Both classes provide the same functionality, but the Kotlin version is significa
 * Highly stable and predictable language evolution.
 * Often considered easier to read for developers unfamiliar with Kotlin.
 
-#### Java Disadvantages
+### Java Disadvantages
 
 * Requires more boilerplate code.
 * Verbose syntax for common tasks.
@@ -166,7 +164,7 @@ Both classes provide the same functionality, but the Kotlin version is significa
 * New language features often appear later than in Kotlin.
 * More code typically means increased maintenance effort.
 
-#### Kotlin Advantages
+### Kotlin Advantages
 
 * Concise syntax that significantly reduces boilerplate code.
 * Built-in null safety helps prevent `NullPointerException` errors.
@@ -175,7 +173,7 @@ Both classes provide the same functionality, but the Kotlin version is significa
 * Often leads to faster development and improved code readability.
 * Strong support for functional programming concepts.
 
-#### Kotlin Disadvantages
+### Kotlin Disadvantages
 
 * Smaller developer community compared to Java.
 * Steeper learning curve for teams coming from traditional Java development.
@@ -187,7 +185,7 @@ Both classes provide the same functionality, but the Kotlin version is significa
 
 A typical Spring Boot controller in Java looks as follows:
 
-```
+```java
 @RestController
 public class HelloController {
 
@@ -215,6 +213,53 @@ class HelloController {
 
 The difference is relatively small for simple examples, but in larger applications Kotlin's concise syntax can significantly reduce the overall amount of code.
 
-#### Summary
+### Summary
 
 Java prioritizes stability, familiarity, and broad enterprise adoption, making it the most common choice for large corporate systems. Kotlin prioritizes developer productivity, concise syntax, and modern language features while remaining fully compatible with the Java ecosystem. For Spring Boot applications, both languages provide the same runtime capabilities, and the choice is usually based on team preferences, existing codebases, and long-term maintenance considerations.
+
+## Versions
+
+### Java Versions and LTS Releases
+
+Java is developed and released in a sequence of numbered versions. New versions introduce language improvements, performance optimizations, security updates, and enhancements to the Java Virtual Machine (JVM). Examples of major Java versions include Java 8, Java 11, Java 17, Java 21, and newer releases.
+
+Not all Java versions receive long-term support. Certain versions are designated as **LTS (Long-Term Support)** releases. An LTS version receives updates, bug fixes, and security patches for a significantly longer period than standard releases. Organizations often prefer LTS versions because they provide stability and reduce the need for frequent upgrades.
+
+For example:
+
+* Java 8: LTS
+* Java 11: LTS
+* Java 17: LTS
+* Java 21: LTS
+* Java 25: LTS
+* Java 27
+
+In enterprise environments, LTS versions are commonly used in production systems because they offer a balance between modern features and long-term stability.
+
+### Spring Boot and Java Version Compatibility
+
+Spring Boot is built on top of the Java platform and therefore requires a compatible Java version. Each Spring Boot release defines a range of supported Java versions. Using a newer Java version often provides better performance and access to modern language features, while older Spring Boot versions may be unable to run on the latest Java releases.
+
+When selecting a Spring Boot version, it is important to verify which Java versions it supports. For example, a project using Java 21 requires a Spring Boot version that explicitly supports Java 21. Similarly, older projects running on Java 8 are limited to older Spring Boot releases.
+
+A simplified example:
+
+```
+Spring Boot 2.x
+ └── typically used with Java 8, 11, or 17
+
+Spring Boot 3.x
+ └── requires Java 17 or newer
+ 
+Spring Boot 4.x
+ └── requires Java 17 or newer
+     └── Java 25 is also a first-class supported version
+```
+
+Developers should therefore consider both technologies together rather than independently. Upgrading Spring Boot may require a Java upgrade, and adopting a newer Java version may require migrating to a newer Spring Boot release.
+
+### Why LTS Versions Are Preferred
+
+Most organizations standardize on LTS releases for both Java and Spring Boot because long-term support reduces operational risk. LTS versions receive security fixes for a longer time, benefit from extensive testing in production environments, and generally have broader support from third-party libraries, frameworks, and tools.
+
+For example, when starting a new enterprise application, a team will often select the latest available LTS Java version together with a recent Spring Boot release that officially supports it. This combination provides access to modern features while ensuring long-term maintainability and support.
