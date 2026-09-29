@@ -258,8 +258,81 @@ Spring Boot 4.x
 
 Developers should therefore consider both technologies together rather than independently. Upgrading Spring Boot may require a Java upgrade, and adopting a newer Java version may require migrating to a newer Spring Boot release.
 
-### Why LTS Versions Are Preferred
+### Why LTS?
 
 Most organizations standardize on LTS releases for both Java and Spring Boot because long-term support reduces operational risk. LTS versions receive security fixes for a longer time, benefit from extensive testing in production environments, and generally have broader support from third-party libraries, frameworks, and tools.
 
 For example, when starting a new enterprise application, a team will often select the latest available LTS Java version together with a recent Spring Boot release that officially supports it. This combination provides access to modern features while ensuring long-term maintainability and support.
+
+## Starters
+
+#### Spring Web
+
+Spring Web is a Spring Boot starter that provides the functionality required to build web applications and REST APIs. It includes support for HTTP request processing, URL routing, JSON serialization and deserialization, validation integration, and an embedded application server such as Tomcat. When this dependency is added to a project, Spring Boot automatically configures the infrastructure required to expose HTTP endpoints and process incoming requests. It is one of the most commonly used starters in backend development, serving as the foundation for web services and microservice-based applications.
+
+#### MySQL Driver
+
+The MySQL Driver is a JDBC (Java Database Connectivity) driver that allows a Java application to communicate with a MySQL database server. More generally, every relational database system requires a corresponding database driver that translates Java database operations into the database-specific communication protocol. For example, applications may use MySQL, PostgreSQL, Oracle Database, Microsoft SQL Server, or another database product, each with its own JDBC driver. Spring Boot uses these drivers to establish database connections and execute queries through higher-level frameworks such as Spring Data JPA.
+
+#### Lombok
+
+Lombok is a Java library that reduces boilerplate code by automatically generating commonly used methods during compilation. Developers can annotate classes with annotations such as `@Getter`, `@Setter`, `@Constructor`, `@Builder`, or `@Data`, and Lombok generates the corresponding code automatically. This greatly reduces the amount of repetitive code, making source files shorter and easier to read. Lombok is particularly popular for data-transfer objects (DTOs), configuration classes, and domain entities that would otherwise contain large amounts of trivial accessor and constructor code.
+
+Without Lombok:
+
+```java
+public class User {
+    private String name;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}
+```
+
+With Lombok:
+
+```java
+@Getter
+@Setter
+public class User {
+    private String name;
+}
+```
+
+#### Spring Data JPA
+
+Spring Data JPA is a Spring framework module that simplifies database access using the Java Persistence API (JPA). Instead of writing low-level database access code, developers define repository interfaces and Spring automatically generates the required implementations. Spring Data JPA is most commonly used together with ORM frameworks such as Hibernate, which map Java objects to database tables. This allows developers to work with domain objects rather than manually constructing SQL statements for basic operations.
+
+For example, a repository can often be defined with only a few lines of code:
+
+```java
+public interface UserRepository
+        extends JpaRepository<User, Long> {
+}
+```
+
+Spring automatically provides operations for creating, reading, updating, deleting, pagination, sorting, and query execution.
+
+#### Validation
+
+Validation is used to verify that input data satisfies predefined rules before it is processed by the application. This helps maintain data consistency, prevents invalid values from being stored, and improves application security. Spring Boot integrates validation through Jakarta Bean Validation and allows developers to define validation rules using annotations directly on data models.
+
+For example:
+
+```java
+public class UserDto {
+
+    @NotBlank
+    private String name;
+
+    @Min(18)
+    private int age;
+}
+```
+
+In this example, the user name must not be empty, and the age must be at least 18. When invalid data is submitted, Spring Boot can automatically reject the request and return an appropriate error message. Validation is commonly used for REST API requests, form processing, configuration parameters, and data transfer objects, ensuring that business logic receives only valid and reliable input data.
