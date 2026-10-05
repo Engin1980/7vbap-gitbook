@@ -178,3 +178,51 @@ Events answer **"Which important action occurred?"** and often trigger reactions
 Tracing answers **"How did this request travel through the system?"** by tracking a request across multiple services.
 
 Together, monitoring, logging, events, and tracing form the foundation of modern system observability, allowing engineers to understand, operate, troubleshoot, and optimize complex distributed applications.
+
+## Languages
+
+#### C++
+
+C++ is one of the oldest and most powerful languages used for backend development. It provides direct access to hardware resources, excellent performance, and very fine-grained control over memory management. These characteristics make it particularly suitable for systems where latency and throughput are critical, such as game servers, financial trading platforms, database engines, and high-performance network services.
+
+The main advantage of C++ is its speed. Applications written in C++ can achieve performance close to the hardware limits of the underlying system. The language is also highly portable and supported by a mature ecosystem of tools and libraries. However, these advantages come at the cost of complexity. Manual memory management, a large language specification, and intricate debugging can significantly increase development time and maintenance costs. As a result, C++ is relatively uncommon for typical business web backends, where developer productivity is often more important than maximum performance.
+
+#### Go
+
+Go was designed by Google to simplify the development of scalable server-side applications. It emphasizes simplicity, readability, and efficient concurrency. The language has become particularly popular for cloud-native applications, microservices, container platforms, and distributed systems.
+
+One of Go's greatest strengths is its built-in support for concurrency through goroutines and channels. The language compiles quickly, produces standalone binaries, and offers a straightforward deployment process. The standard library is extensive and includes well-designed networking and web-development packages. On the other hand, Go provides fewer language features than many modern programming languages, which some developers find limiting. Generic programming was introduced relatively late, and the language's simplicity can occasionally lead to repetitive code. Today, Go is widely used in modern backend systems and has become a common choice for infrastructure-related projects.
+
+#### Rust
+
+Rust is a modern systems programming language focused on safety, performance, and reliability. It aims to provide performance comparable to C++ while eliminating many classes of memory-related bugs through its ownership and borrowing model.
+
+The primary advantage of Rust is its strong compile-time guarantees. Memory leaks, null pointer dereferences, and data races are significantly reduced without relying on a garbage collector. This makes Rust attractive for highly reliable backend services, network applications, and systems where both performance and security are important. The main disadvantage is the language's steep learning curve. Concepts such as ownership, lifetimes, and borrowing can be challenging for newcomers. Compilation times may also be longer than those of some competing languages. Although Rust's popularity has grown rapidly, it is still less commonly used in enterprise backend development than Java, C#, or JavaScript.
+
+#### Ruby
+
+Ruby is a dynamic, object-oriented language best known for the Ruby on Rails framework. Rails played a major role in popularizing rapid web application development and helped numerous startups launch products quickly.
+
+Ruby's greatest strength is developer productivity. Its syntax is elegant and expressive, allowing developers to implement features with relatively little code. The Rails ecosystem provides a large number of conventions and tools that accelerate development. However, Ruby generally delivers lower runtime performance than compiled languages such as Go, Java, C#, or Rust. Scaling very large applications may require additional hardware resources. While Ruby remains important and widely respected, its popularity in new backend projects has declined compared with its peak years, particularly in large enterprise environments.
+
+#### JavaScript
+
+JavaScript is unique among major backend languages because it originated as a browser scripting language before expanding into server-side development through platforms such as Node.js. Today, it is one of the most frequently used backend technologies.
+
+The greatest advantage of JavaScript is the ability to use the same language on both the frontend and backend. This can simplify development teams, code sharing, and overall project architecture. The Node.js ecosystem contains an enormous number of libraries and frameworks, making development fast and flexible. JavaScript also performs very well for I/O-intensive applications because of its event-driven architecture. Nevertheless, the language has some weaknesses. Its dynamic typing can lead to runtime errors, and managing large codebases may become challenging without additional tooling. Consequently, TypeScript, a statically typed superset of JavaScript, has become increasingly popular for professional backend development. JavaScript remains one of the most commonly used languages for web backends worldwide.
+
+#### Java
+
+Java has been a dominant backend language for enterprise software development for more than two decades. It is widely used in banking, insurance, government systems, telecommunications, and large-scale web applications.
+
+Java offers an excellent balance between performance, reliability, maintainability, and ecosystem maturity. The language benefits from powerful frameworks such as Spring/SpringBoot, extensive tooling, robust security features, and strong backward compatibility. Applications can scale effectively and are supported by a large pool of experienced developers. The primary disadvantages include relatively high memory consumption and the amount of boilerplate code traditionally associated with the language, although modern Java versions have reduced this issue considerably. Java remains one of the most widely used backend languages in large organizations and enterprise environments.
+
+#### C\#
+
+C# is Microsoft's flagship programming language and one of the strongest competitors to Java in backend development. It is closely integrated with the .NET platform and is widely used for web applications, cloud services, desktop software, and enterprise systems.
+
+Among its strengths are a modern language design, excellent tooling through Visual Studio, strong type safety, and high developer productivity. The ASP.NET Core framework delivers excellent performance and cross-platform deployment capabilities. C# has evolved rapidly and incorporates many modern language features while maintaining readability and consistency. Historically, its close association with the Microsoft ecosystem was sometimes viewed as a limitation, but .NET has become fully cross-platform and open source. C# is highly popular in enterprise development and has established itself as one of the leading backend technologies, particularly in organizations that rely on Microsoft infrastructure.
+
+#### Overall Comparison
+
+Among the languages discussed, Java and C# are the most common choices for large enterprise backend systems due to their mature ecosystems, long-term maintainability, and extensive tooling. JavaScript is extremely popular for web applications and startups because it allows full-stack development with a single language. Go has become a major player in cloud and microservice architectures thanks to its simplicity and concurrency model. Rust is growing rapidly in areas where safety and performance are critical, while C++ remains important for specialized high-performance systems. Ruby continues to be valued for rapid application development, although its relative popularity has declined compared to newer alternatives.
