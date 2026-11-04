@@ -8,12 +8,13 @@ In **synchronous programming**, the caller initiates an operation and waits unti
 
 Consider a simple example in which an application requests information about a customer:
 
-```
-getCustomer(123)
-↓
-wait for result
-↓
-process customer data
+```mermaid
+flowchart TD
+    A["getCustomer(123)"]
+    B["Wait for result"]
+    C["Process customer data"]
+
+    A --> B --> C
 ```
 
 The key characteristic is that the caller remains blocked until the requested operation finishes. This model is intuitive because program execution follows a direct and predictable path. Developers can read the code from top to bottom and easily understand the order of operations.
@@ -28,22 +29,24 @@ In asynchronous programming, a component initiates an operation but does not wai
 
 Conceptually, the execution flow changes from:
 
-```
-request
-↓
-wait
-↓
-continue
+```mermaid
+flowchart TD
+    A["request"]
+    B["wait"]
+    C["continue"]
+
+    A --> B --> C
 ```
 
 to:
 
-```
-request
-↓
-continue working
-↓
-receive result later
+```mermaid
+flowchart TD
+    A["request"]
+    B["continue"]
+    C["receive (and process) results later"]
+
+    A --> B --> C
 ```
 
 Imagine an online store generating a sales report. Creating the report might take several minutes because it involves processing a large volume of data. From the user's perspective, it is unnecessary to keep the browser waiting the entire time. Instead, the system can acknowledge the request immediately and generate the report in the background. Once the report is finished, the user can be notified that it is available for download.
@@ -68,11 +71,14 @@ In distributed systems, synchronous communication follows a request-response mod
 
 A typical interaction consists of four steps. The client establishes a connection, sends a request, the server processes the request, and a response is returned.
 
-```
-Client                         Server
-  | ---- HTTP Request ------> |
-  |                            |
-  | <--- HTTP Response ------ |
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Server
+
+    Client->>Server: HTTP Request
+    Note over Client: Waiting for response
+    Server-->>Client: HTTP Response
 ```
 
 Although originally developed for web pages, HTTP is now commonly used for machine-to-machine communication, especially in web APIs and distributed systems.
@@ -103,11 +109,16 @@ TCP guarantees that:
 
 Communication begins with connection establishment, often called the _three-way handshake_.
 
-```
-Client                Server
-  | ---- SYN -------> |
-  | <--- SYN-ACK --- |
-  | ---- ACK -------> |
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Server
+
+    Client->>Server: SYN (connection request)
+    Server-->>Client: SYN-ACK (request accepted)
+    Client->>Server: ACK (confirmation)
+
+    Note over Client,Server: TCP connection established
 ```
 
 Once established, both sides can exchange byte streams reliably.
@@ -124,14 +135,14 @@ It is important to distinguish between TCP and sockets. TCP is a communication p
 
 A TCP socket connection typically looks as follows:
 
-```
-Application
-      |
-    Socket
-      |
-     TCP
-      |
-      IP
+```mermaid
+flowchart TD
+    APP["Application Layer"]
+    SOCK["Socket API"]
+    TCP["TCP Protocol"]
+    IP["IP Protocol"]
+
+    APP --> SOCK --> TCP --> IP
 ```
 
 Using sockets, applications can exchange arbitrary data:
@@ -152,10 +163,17 @@ WebSockets were introduced to overcome the request-response limitations of HTTP.
 
 WebSockets establish a persistent connection that remains open after the initial handshake.
 
-```
-Client <=================> Server
-        Bidirectional
-          Channel
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Server
+
+    Client->>Server: Message
+    Server->>Client: Message
+    Client->>Server: Message
+    Server->>Client: Message
+
+    Note over Client,Server: Persistent bidirectional channel
 ```
 
 After the connection is established, either side can send messages at any time.
@@ -220,20 +238,22 @@ Behind the scenes, the framework:
 
 Conceptually:
 
-```
-Local Call
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Server
 
-result = getCustomer(123)
+    Note over Client: getCustomer(123)
 
-↓
+    Client->>Client: Serialize parameters
+    Client->>Server: Send request as bytes
+    Server->>Server: Deserialize request
+    Server->>Server: Execute procedure
+    Server->>Server: Serialize result
+    Server-->>Client: Return response
+    Client->>Client: Deserialize result
 
-Remote Communication
-
-serialize
-send request
-execute remotely
-receive response
-deserialize
+    Note over Client: result returned
 ```
 
 RPC improves developer productivity because distributed communication resembles ordinary object-oriented programming.
@@ -273,24 +293,6 @@ Compared with traditional text-based formats, Protocol Buffers use compact binar
 * faster serialization,
 * faster deserialization.
 
-A typical gRPC interaction follows this sequence:
-
-```
-Client
-   |
-   | GetCustomer(123)
-   v
-gRPC Runtime
-   |
-   | Binary Protocol Buffer Message
-   v
-Server
-   |
-   | Execute Service
-   v
-Response
-```
-
 Because of its performance characteristics and strong typing, gRPC has become particularly popular in microservice architectures where a large number of internal service-to-service calls occur.
 
 ### Comparison
@@ -317,18 +319,13 @@ This approach reduces coupling between components. The sender does not need to k
 
 A typical asynchronous interaction can be represented as:
 
-```
-Producer
-    |
-    | Message
-    v
- Message Broker
-    |
-    +----> Consumer A
-    |
-    +----> Consumer B
-    |
-    +----> Consumer C
+```mermaid
+flowchart TD
+    P[Producer] --> MB[Message Broker]
+
+    MB --> A[Consumer A]
+    MB --> B[Consumer B]
+    MB --> C[Consumer C]
 ```
 
 The central element of most asynchronous architectures is a **message broker**, which acts as an intermediary between producers and consumers.
@@ -341,42 +338,34 @@ The core idea is straightforward. Applications send messages to the broker, and 
 
 In its simplest form:
 
-```
-Sender
-   |
-   v
-ActiveMQ
-   |
-   v
-Receiver
+```mermaid
+flowchart LR
+    S[Sender] --> AMQ[ActiveMQ]
+    AMQ --> R[Receiver]
 ```
 
 ActiveMQ supports both **queues** and **topics**.
 
 A queue implements a point-to-point communication model. Multiple consumers may listen to the queue, but each message is processed by only one consumer.
 
-```
-Order Queue
-    |
-    +---- Worker 1
-    |
-    +---- Worker 2
-    |
-    +---- Worker 3
+```mermaid
+flowchart TD
+    Q[Order Queue]
 
-Message processed once
+    Q --> W1[Worker 1]
+    Q --> W2[Worker 2]
+    Q --> W3[Worker 3]
 ```
 
 A topic implements a publish-subscribe model. Every subscriber receives a copy of the message.
 
-```
-Order Created Topic
-       |
-       +---- Email Service
-       |
-       +---- Analytics Service
-       |
-       +---- Billing Service
+```mermaid
+flowchart TD
+    T[Order Created Topic]
+
+    T --> E[Email Service]
+    T --> A[Analytics Service]
+    T --> B[Billing Service]
 ```
 
 ActiveMQ is particularly suitable for enterprise integration scenarios where reliability, transaction support, and compatibility with existing systems are important.
@@ -387,29 +376,25 @@ ActiveMQ is particularly suitable for enterprise integration scenarios where rel
 
 The architecture introduces an intermediate component called an **exchange**.
 
-```
-Producer
-    |
-    v
- Exchange
-    |
-    +---- Queue A
-    |
-    +---- Queue B
-    |
-    +---- Queue C
+```mermaid
+flowchart TD
+    P[Producer] --> EX[Exchange]
+
+    EX --> QA[Queue A]
+    EX --> QB[Queue B]
+    EX --> QC[Queue C]
 ```
 
 The exchange determines how messages are routed to queues.
 
 For example:
 
-```
-Order.Created
-    |
-    +---- Email Queue
-    |
-    +---- Invoice Queue
+```mermaid
+flowchart TD
+    O[Order.Created]
+
+    O --> EQ[Email Queue]
+    O --> IQ[Invoice Queue]
 ```
 
 When a new order is created, multiple downstream services can react independently.
@@ -432,20 +417,17 @@ Strictly speaking, ZeroMQ is not a message broker at all. It is a high-performan
 
 Traditional broker-based communication:
 
-```
-Producer
-    |
-    v
-Broker
-    |
-    v
-Consumer
+```mermaid
+flowchart LR
+    P[Producer] --> B[Broker]
+    B --> C[Consumer]
 ```
 
 ZeroMQ communication:
 
-```
-Producer <-------> Consumer
+```mermaid
+flowchart LR
+    P[Producer] <--> C[Consumer]
 ```
 
 No central broker is required.
@@ -478,17 +460,15 @@ The fundamental abstraction in Kafka is the **event log**.
 
 Instead of removing messages after delivery, Kafka stores them for a configurable retention period.
 
-```
-Producer
-    |
-    v
- Topic
- ----------------------------------
- | Event 1                        |
- | Event 2                        |
- | Event 3                        |
- | Event 4                        |
- ----------------------------------
+```mermaid
+flowchart LR
+    P[Producer]
+
+    subgraph Topic_Log
+        E1["Event 1"] --> E2["Event 2"] --> E3["Event 3"] --> E4["Event 4"]
+    end
+
+    P --> E1
 ```
 
 Consumers maintain their own position within the log.
@@ -538,35 +518,22 @@ Although **Redis** was originally designed as an in-memory key-value database, i
 
 The simplest mechanism is **Pub/Sub (Publish/Subscribe)**.
 
-```
-Publisher
-     |
-     v
- Redis Channel
-     |
-     +---- Subscriber A
-     |
-     +---- Subscriber B
+```mermaid
+flowchart TD
+    P[Publisher] --> M[Message]
+
+    S0[Subscriber A]
+    S1[Subscriber B - Offline]
+
+    M ---> S0
+    M -. not delivered .-> S1
 ```
 
 When a message is published, all active subscribers receive it.
 
 However, Redis Pub/Sub has an important limitation: if a subscriber is disconnected when a message is published, the message is lost.
 
-```
-Publisher
-     |
-     v
- Message
-
-Subscriber offline
-       ↓
-Message lost
-```
-
-For more reliable messaging, Redis provides **Streams**, introduced in Redis 5.
-
-Streams resemble a simplified event log:
+For more reliable messaging, Redis provides **Streams**, introduced in Redis 5. Streams resemble a simplified event log:
 
 ```
 Stream
