@@ -9,6 +9,7 @@
 * [Architecture](concepts/architecture.md)
 * [Microservices](concepts/microservices.md)
 * [Sync/Async Communication](concepts/sync-async-communication.md)
+* [OpenAPI, Swagger](concepts/openapi-swagger.md)
 
 ## BE - Spring Boot
 
