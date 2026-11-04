@@ -8,6 +8,7 @@
 * [Common Backend Techniques and Technologies](concepts/common-backend-techniques-and-technologies.md)
 * [Architecture](concepts/architecture.md)
 * [Microservices](concepts/microservices.md)
+* [Sync/Async Communication](concepts/sync-async-communication.md)
 
 ## BE - Spring Boot
 
