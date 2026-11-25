@@ -1,0 +1,5 @@
+# Security - Authentication
+
+Základní pravidla. Píšeš studijní oporu pro studenty informatiky. Studijní opora je anglicky. Oporu píšeš do systému GitBOok, proto používej jeho formáty, přístupy, značky. Používej primárně volný text, snaž se minimálně používat odrážky. Pokud potřebuješ dělat schémata, snaž se je dělat přes mermaid. Pokud by byl někde vhodný obrázek, zkus popsat jeho vytvoření jako prompt pro nástroj AI - výstupem tedy bude TODO OBRÁZEK PROMPT: text promptu.
+
+Aktuální kapitole popisuješ způsob autentizace uživatele do webové aplikace. Představ základní pojmy v této oblasti a způsob ověření uživatele - takové ty "něco znát/něco mít/něco vím (nebo jak to je). Pak zkus popsat dnešní základní moderní mechanismy, jako je jméno heslo. passphrases, i modernější přístupy, jako passkey, authenticator aplikace a další vytvoř vhodný přehled. U každého přístupu připiš výhody, nevýhody, bezpečnost a složitost na implementaci. Nechci složité kusy zdrojových kódů. Spíš jde o přehled, aby student věděl, kterým směrem se může ubírat a co se může řešit.

@@ -10,6 +10,9 @@
 * [Microservices](concepts/microservices.md)
 * [Sync/Async Communication](concepts/sync-async-communication.md)
 * [OpenAPI, Swagger](concepts/openapi-swagger.md)
+* [Security - Authentication](concepts/security-authentication.md)
+* [Security - Authorization](concepts/security-authorization.md)
+* [Security - Other concepts](concepts/security-other-concepts.md)
 
 ## BE - Spring Boot
 
