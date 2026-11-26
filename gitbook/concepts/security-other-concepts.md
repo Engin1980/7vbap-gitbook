@@ -167,7 +167,7 @@ Content-Security-Policy: default-src 'self'; script-src 'self'; object-src 'none
 
 Finally, mark session cookies `HttpOnly` so that scripts cannot read them, and be careful with third-party scripts. See also [XSS - Cross-Site Scripting](../general-topics/xss-cross-site-scripting.md).
 
-TODO OBRÁZEK PROMPT: Side-by-side comparison diagram for a study text. Left: "CSRF" - a user's browser with a logged-in bank tab, a malicious tab sending a request to the bank with a cookie attached, caption "Attacker abuses the browser's automatic credentials". Right: "XSS" - a legitimate website page that contains an injected malicious script, sending the user's token to an attacker server, caption "Attacker runs code inside the trusted site". Flat style, red for attacker elements, blue for user, white background.
+![XSS](./imgs/xss.jpg)
 
 ## Other Important Concepts
 

@@ -96,8 +96,7 @@ flowchart LR
     P --> T
     S --> T
 ```
-
-TODO OBRÁZEK PROMPT: Illustration of a JWT split into three coloured blocks separated by dots: red "Header" (algorithm, type), purple "Payload" (claims such as sub, exp, roles) and blue "Signature" (a wax-seal icon). Under each block show the decoded JSON form, above it the long Base64 string coloured accordingly. Clean flat style, white background, suitable for a university study text.
+![JWT](./imgs/jwt.jpg)
 
 {% hint style="warning" %}
 The payload is only **encoded**, not encrypted. Anybody who obtains the token can read it (paste it into jwt.io and see). Never put passwords, personal data or other secrets into an ordinary signed JWT.

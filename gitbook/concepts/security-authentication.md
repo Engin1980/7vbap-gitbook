@@ -36,7 +36,7 @@ flowchart LR
     A --> S
 ```
 
-TODO OBRÁZEK PROMPT: Flat, clean illustration for a university study text showing three icons side by side labelled "Something you know" (a brain with a password field "••••••"), "Something you have" (a smartphone and a USB security key) and "Something you are" (a fingerprint and a face outline). Below them, an arrow pointing to a padlock-protected web application. Minimal style, white background, blue and grey colour palette, no photographs.
+![Basic Concepts](./imgs/auth.jpg)
 
 ## Overview of Authentication Mechanisms
 
@@ -140,7 +140,7 @@ There are two kinds of authenticators. **Hardware security keys** (YubiKey and s
 
 The disadvantages are mainly practical. The ecosystem is still evolving and users are not yet familiar with it. Account recovery is difficult (what if the user loses all devices?), synchronized passkeys depend on the security of the cloud account, and hardware keys cost money. Implementation complexity is **medium to high**: the protocol has many details (challenge handling, origin and attestation checks, counters, credential storage), so in practice you should use a well-tested library (for example *Yubico java-webauthn-server* or Spring Security's built-in passkey support in recent versions) and not write the cryptography yourself. Security is **very high**.
 
-TODO OBRÁZEK PROMPT: Simple diagram for a study text explaining passkey login: a laptop browser showing a login page, a smartphone showing a fingerprint prompt, and a server with a database holding only "public key". Arrows labelled "challenge" and "signed challenge". A separate crossed-out fake phishing website with a red cross and the caption "Cannot obtain a valid signature". Clean flat style, white background.
+![PassKey](./imgs/passkey.jpg)
 
 ### Biometrics
 
