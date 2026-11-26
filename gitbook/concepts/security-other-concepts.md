@@ -93,7 +93,7 @@ sequenceDiagram
     participant E as evil.example
 
     V->>B: login
-    B-->>V: Set-Cookie: SESSION=abc; SameSite=Strict
+    B-->>V: Set-Cookie: SESSION=abc #59; SameSite=Strict
     V->>E: opens a malicious page
     E-->>V: page with hidden form to bank.example
     V->>B: POST /transfer (cookie NOT attached,<br/>request is cross-site)
