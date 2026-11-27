@@ -48,21 +48,17 @@ The presentation layer is responsible for communication with clients and process
 
 The following diagram illustrates a typical layered architecture:
 
-{% code lineNumbers="true" %}
+```mermaid
+flowchart TD
+    C["Client"] --> CT["Controller"]
+    CT --> S["Service"]
+    S --> R["Repository"]
+    R --> DB[("Database")]
 ```
-Client
-   ↓
-Controller
-   ↓
-Service
-   ↓
-Repository
-   ↓
-Database
-```
-{% endcode %}
 
 By separating responsibilities into layers, the application becomes easier to maintain and extend. Individual layers can be modified independently, business logic can be tested without a running web server, and database technology can be changed with minimal impact on the rest of the system.
+
+TODO IMG: Prompt: Clean flat infographic of a layered architecture in a Spring Boot backend. Four stacked horizontal layers labeled Presentation (Controller), Business (Service), Persistence (Repository) and a database cylinder at the bottom. A client icon on top sends an arrow down through the layers. Each layer has a short responsibility caption. Light background, consistent blue palette, no photographic elements, 16:9.
 
 In Spring Boot, a layered architecture is often implemented using dedicated packages:
 
@@ -214,19 +210,13 @@ From the MVC perspective, this JSON document serves as the View because it is th
 
 The communication flow can therefore be simplified as:
 
-{% code lineNumbers="true" %}
+```mermaid
+flowchart TD
+    REQ["HTTP Request"] --> CT["Controller"]
+    CT --> M["Model / Business Logic"]
+    M --> DTO["DTO Object"]
+    DTO --> JSON["JSON Response (View)"]
 ```
-HTTP Request
-      ↓
- Controller
-      ↓
-Model / Business Logic
-      ↓
-DTO Object
-      ↓
-JSON Response (View)
-```
-{% endcode %}
 
 #### MVC Combined with Layered Architecture
 
@@ -236,31 +226,23 @@ The controller handles HTTP communication, the service layer contains business l
 
 The resulting request flow is usually:
 
-{% code lineNumbers="true" %}
-```
-Client
-   ↓
-Controller
-   ↓
-Service
-   ↓
-Repository
-   ↓
-Database
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant CT as Controller
+    participant S as Service
+    participant R as Repository
+    participant DB as Database
 
-Database
-   ↑
-Repository
-   ↑
-Service
-   ↑
-DTO (View)
-   ↑
-Controller
-   ↑
-Client
+    C->>CT: HTTP request
+    CT->>S: call
+    S->>R: query
+    R->>DB: SQL
+    DB-->>R: data
+    R-->>S: entity
+    S-->>CT: DTO
+    CT-->>C: JSON response
 ```
-{% endcode %}
 
 #### Example Project Structure
 
@@ -315,6 +297,13 @@ Controller →  ProductController
 View       →  JSON returned by REST endpoints
 ```
 {% endcode %}
+
+```mermaid
+flowchart LR
+    M["Model"] --> P["Product, ProductDto"]
+    CT["Controller"] --> PC["ProductController"]
+    V["View"] --> J["JSON returned by REST endpoints"]
+```
 
 This approach provides significantly better maintainability than placing database access, business logic, and HTTP processing in a single class. Each component has a clearly defined responsibility, making the application easier to understand, test, and extend.
 
@@ -398,30 +387,30 @@ src/main/java/com.example.shop
 ├── product
 │   ├── create
 │   │   ├── CreateProductController.java
-│   │   ├── CreateProductService.java
+│   │   ├── CreateProductService.java (or CreateProductUseCase.java)
 │   │   ├── CreateProductRequest.java
 │   │   └── CreateProductResponse.java
 │   │
 │   ├── getbyid
 │   │   ├── GetProductController.java
-│   │   ├── GetProductService.java
+│   │   ├── GetProductService.java (or GetProductUseCase.java)
 │   │   ├── GetProductResponse.java
 │   │   └── GetProductMapper.java
 │   │
 │   └── delete
 │       ├── DeleteProductController.java
-│       └── DeleteProductService.java
+│       └── DeleteProductService.java (or DeleteProductUseCase.java)
 │
 ├── order
 │   ├── create
 │   │   ├── CreateOrderController.java
-│   │   ├── CreateOrderService.java
+│   │   ├── CreateOrderService.java (or CreateOrderUseCase.java)
 │   │   ├── CreateOrderRequest.java
 │   │   └── CreateOrderResponse.java
 │   │
 │   └── getbyid
 │       ├── GetOrderController.java
-│       ├── GetOrderService.java
+│       ├── GetOrderService.java (or GetOrderUseCase.java)
 │       └── GetOrderResponse.java
 │
 ├── entity
@@ -435,6 +424,12 @@ src/main/java/com.example.shop
 {% endcode %}
 
 In this structure, each use case is implemented as an independent vertical slice. When a developer needs to modify the "Create Product" functionality, all related files can be found in a single directory.
+
+{% hint style="info" %}
+Note that as the `Service` is here tightly connected to the `Controller` and is no more a global supporting object for operations, it is being also called `UseCase`.
+{% endhint %}
+
+![VSA comparison](./imgs/vsa.jpg)
 
 #### Advantages of Vertical Slice Architecture
 
@@ -454,7 +449,7 @@ HTTP Request
       ↓
 GetProductController
       ↓
-GetProductService
+GetProductUseCase
       ↓
 ProductRepository
       ↓
@@ -465,5 +460,39 @@ GetProductResponse
 JSON Response
 ```
 {% endcode %}
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant CPC as CreateProductController
+    participant CPS as CreateProductUseCase
+    participant GPC as GetProductController
+    participant GPS as GetProductUseCase
+    participant GPM as GetProductMapper
+    participant PR as ProductRepository
+    participant DB as Database
+
+    Note over C,DB: Slice 1: product/create
+    C->>CPC: POST /products (CreateProductRequest)
+    CPC->>CPS: create(request)
+    CPS->>PR: save(Product)
+    PR->>DB: INSERT
+    DB-->>PR: saved row
+    PR-->>CPS: Product
+    CPS-->>CPC: CreateProductResponse
+    CPC-->>C: 201 Created (JSON)
+
+    Note over C,DB: Slice 2: product/getbyid (different classes, same shared Product entity and ProductRepository)
+    C->>GPC: GET /products/{id}
+    GPC->>GPS: getById(id)
+    GPS->>PR: findById(id)
+    PR->>DB: SELECT
+    DB-->>PR: row
+    PR-->>GPS: Product
+    GPS->>GPM: toResponse(Product)
+    GPM-->>GPS: GetProductResponse
+    GPS-->>GPC: GetProductResponse
+    GPC-->>C: 200 OK (JSON)
+```
 
 From the outside, the application behaves exactly the same as a traditional layered application. The difference lies in the organization of the source code. Rather than grouping files by technical responsibility, Vertical Slice Architecture groups them by business functionality. As a result, large projects often become easier to navigate, understand, and maintain over time.

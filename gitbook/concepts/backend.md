@@ -44,9 +44,13 @@ A cluster is a group of interconnected servers that work together as a single sy
 
 A load balancer is a component responsible for distributing incoming network traffic across multiple servers. Its primary purpose is to prevent any single server from becoming overloaded while ensuring optimal utilization of available resources. Load balancers can route requests using various algorithms, such as round-robin, least connections, or resource-based selection. By spreading the workload across multiple instances of an application, load balancers improve performance, increase reliability, and support horizontal scaling of services.
 
+![Load Balancer](./imgs/loadbalancer.png)
+
 ### Serverless
 
 Serverless is a cloud computing model in which developers focus on implementing application logic while the cloud provider manages the underlying infrastructure. Although servers still exist, their provisioning, scaling, maintenance, and operation are handled automatically by the platform. Applications are typically executed as event-driven functions that run only when needed. This model reduces operational overhead and allows organizations to pay only for the actual resources consumed during execution. Popular serverless platforms include Azure Functions, AWS Lambda, and Google Cloud Functions.
+
+![Serverless](./imgs/serverless.jpg)
 
 ## Interfaces
 
@@ -64,6 +68,8 @@ WebSocket is a communication protocol that enables persistent bidirectional comm
 
 One of the main disadvantages of WebSocket communication is the need to maintain a persistent connection between the client and the server. Unlike stateless HTTP requests, each connected client consumes server resources for the entire duration of the connection, which can increase memory and infrastructure requirements when supporting a large number of concurrent users. WebSocket communication is also more complex to implement, monitor, and secure than traditional REST APIs. Additional challenges may arise from connection handling, reconnection logic, load balancing, firewall compatibility, and debugging, making WebSocket solutions generally more difficult to operate and maintain in enterprise environments.
 
+![WebSocket](./imgs/websocket.jpg)
+
 ### Pipes
 
 Pipes are a form of inter-process communication (IPC) provided by **the operating system** that allows data to be transferred directly between processes. A pipe acts as a communication channel where one process writes data and another process reads it. This mechanism enables programs to exchange information without using files, network communication, or shared databases. Pipes are widely used in operating systems to connect independent applications and create processing chains where the output of one program becomes the input of another.
@@ -73,5 +79,7 @@ Operating systems typically support two types of pipes. Anonymous pipes are gene
 #### Filters
 
 In this context, a process connected to a pipe is often referred to as a _filter_. A filter reads data from its input, performs a transformation or processing step, and writes the result to its output. By combining multiple filters through pipes, complex processing workflows can be built from simple, independent components. This concept is especially common in Unix-like operating systems, where commands can be chained together to process data step by step. Such architectures promote modularity, reusability, and a clear separation of responsibilities between individual processing stages.
+
+![Unix Filters](./imgs/unix-pipes.jpg)
 
 Operating systems typically support two types of pipes. Anonymous pipes are generally used for communication between related processes, such as a parent process and its child process. Named pipes, sometimes referred to as FIFOs, provide a persistent communication endpoint identified by a name and can be used by unrelated processes. Pipes offer a simple and efficient communication mechanism for local systems, but they are typically limited to sequential data streams and are not well suited for complex communication patterns requiring random access or bidirectional data exchange.

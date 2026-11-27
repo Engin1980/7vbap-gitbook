@@ -54,6 +54,8 @@ Despite their advantages, microservices are not a universal solution. They intro
 
 Consequently, microservices are particularly suitable for large-scale information systems where independent development, scalability, and frequent deployments are important requirements. For smaller systems, a monolithic architecture may still be a simpler and more cost-effective solution.
 
+![Microservices](./imgs/microservices.jpg)
+
 **Comparison: Monolith vs. Microservices**
 
 | Aspect                 | Monolithic Architecture          | Microservices Architecture             |
@@ -159,22 +161,18 @@ Each service owns its resources.
 
 Instead of:
 
-```
-Product Service
-       │
-       ▼
- Shared Database
-       ▲
-       │
-Order Service
+```mermaid
+flowchart TD
+    P["Product Service"] --> DB[("Shared Database")]
+    O["Order Service"] --> DB
 ```
 
 the preferred approach is:
 
-```
-Product Service → Product Database
-
-Order Service → Order Database
+```mermaid
+flowchart LR
+    P["Product Service"] --> PDB[("Product Database")]
+    O["Order Service"] --> ODB[("Order Database")]
 ```
 
 Communication occurs through APIs or messaging systems rather than direct data sharing.
@@ -232,21 +230,34 @@ Each microservice should execute as an independent runtime process.
 
 Rather than running all functionality inside a single application process:
 
-```
-Monolithic Application
- ├── User Module
- ├── Product Module
- ├── Order Module
- └── Payment Module
+```mermaid
+flowchart TD
+  subgraph Mono["Monolithic Application"]
+    A@{ shape: circle, label: "API" }
+    A --> U["User Module"]
+    A --> P["Product Module"]
+    A --> O["Order Module"]
+    A --> PA["Payment Module"]
+  end
 ```
 
 microservices operate independently:
 
-```
-User Service
-Product Service
-Order Service
-Payment Service
+
+```mermaid
+flowchart LR
+  subgraph Ia["Independent Application"]
+    U["User Service"]
+  end
+  subgraph Ib["Independent Application"]
+    P["Product Service"]
+  end
+  subgraph Ic["Independent Application"]
+    O["Order Service"]
+  end
+  subgraph Id["Independent Application"]
+    PA["Payment Service"]
+  end
 ```
 
 Each service is typically deployed as its own container.
@@ -393,10 +404,18 @@ A **Discovery Service** (also known as a **Service Registry**) is a centralized 
 
 For example, suppose three instances of an `Order Service` are running:
 
-```
-Order Service #1 -> 10.0.1.5:8080
-Order Service #2 -> 10.0.1.8:8080
-Order Service #3 -> 10.0.2.2:8080
+```mermaid
+sequenceDiagram
+    participant O as Order Service instances
+    participant D as Discovery Service
+    participant P as Payment Service
+
+    O->>D: register (10.0.1.5:8080)
+    O->>D: register (10.0.1.8:8080)
+    O->>D: register (10.0.2.2:8080)
+    P->>D: where is Order Service?
+    D-->>P: list of current instances
+    P->>O: call selected instance
 ```
 
 The `Payment Service` does not need to know these addresses in advance. It asks the Discovery Service where the `Order Service` is located and receives the currently available instances.
@@ -425,29 +444,28 @@ An **API Gateway** acts as a single entry point for clients accessing a microser
 
 Without an API Gateway, a client application would need to communicate directly with numerous services:
 
-```
-Client
- ├── User Service
- ├── Product Service
- ├── Order Service
- ├── Payment Service
- └── Notification Service
+
+```mermaid
+flowchart TD
+    C["Client"] --> U["User Service"]
+    C --> P["Product Service"]
+    C --> O["Order Service"]
+    C --> PA["Payment Service"]
+    C --> N["Notification Service"]
 ```
 
 This approach creates tight coupling between clients and internal architecture.
 
 With an API Gateway:
 
-```
-Client
-    │
-    ▼
-API Gateway
- ├── User Service
- ├── Product Service
- ├── Order Service
- ├── Payment Service
- └── Notification Service
+```mermaid
+flowchart TD
+    C["Client"] --> G["API Gateway"]
+    G --> U["User Service"]
+    G --> P["Product Service"]
+    G --> O["Order Service"]
+    G --> PA["Payment Service"]
+    G --> N["Notification Service"]
 ```
 
 The gateway receives incoming requests and forwards them to the appropriate microservice.
@@ -498,14 +516,13 @@ A **Load Balancer** distributes incoming traffic across multiple instances of th
 
 Consider a Product Service running on three servers:
 
-```
-Client Requests
-       │
-       ▼
- Load Balancer
- ├── Product Service A
- ├── Product Service B
- └── Product Service C
+
+```mermaid
+flowchart TD
+    C["Client Requests"] --> LB["Load Balancer"]
+    LB --> A["Product Service A"]
+    LB --> B["Product Service B"]
+    LB --> D["Product Service C"]
 ```
 
 The load balancer decides which instance will handle each request.
@@ -594,6 +611,16 @@ Service A ---> Service B ?
 
 If successful, the circuit closes again. Otherwise, it reopens.
 
+```mermaid
+stateDiagram-v2
+    [*] --> Closed
+    Closed --> Open: too many failures
+    Open --> HalfOpen: waiting period elapsed
+    HalfOpen --> Closed: test requests succeed
+    HalfOpen --> Open: test request fails
+```
+![Circuit Breaker Metaphor](./imgs/circuitbreaker.jpg)
+
 #### Example
 
 An online store uses:
@@ -633,20 +660,12 @@ Business processes often require cooperation among multiple microservices.
 
 Example:
 
-```
-Customer places order
-        │
-        ▼
-Order Service
-        │
-        ▼
-Payment Service
-        │
-        ▼
-Inventory Service
-        │
-        ▼
-Shipping Service
+```mermaid
+flowchart TD
+    C["Customer places order"] --> O["Order Service"]
+    O --> P["Payment Service"]
+    P --> I["Inventory Service"]
+    I --> S["Shipping Service"]
 ```
 
 A complete business operation involving multiple services is called a **workflow**.
@@ -657,18 +676,14 @@ The question is who coordinates these activities.
 
 Each service reacts to events independently.
 
+```mermaid
+flowchart TD
+    E1["Order Created"] --> P["Payment Service"]
+    P --> E2["Payment Completed"]
+    E2 --> I["Inventory Service"]
 ```
-Order Created
-      │
-      ▼
-Payment Service
-      │
-      ▼
-Payment Completed
-      │
-      ▼
-Inventory Service
-```
+
+![Orchestration Metaphore](./imgs/orchestration.jpg)
 
 No central controller exists.
 
@@ -686,12 +701,11 @@ Disadvantages:
 
 A central component controls the workflow.
 
-```
-Workflow Engine
-      │
-      ├── Payment Service
-      ├── Inventory Service
-      └── Shipping Service
+```mermaid
+flowchart TD
+    W["Workflow Engine"] --> P["Payment Service"]
+    W --> I["Inventory Service"]
+    W --> S["Shipping Service"]
 ```
 
 The orchestrator determines which service should execute next and handles failures.
@@ -779,33 +793,23 @@ Without such testing, many organizations discover weaknesses only during actual 
 
 Together, these components form the foundation of a robust microservices platform:
 
+```mermaid
+flowchart TD
+    C["Client"] --> G["API Gateway"]
+    G --> D["Discovery Service"]
+    D --> U["User Service"]
+    D --> O["Order Service"]
+    D --> P["Product Service"]
+    U --> CB["Circuit Breakers"]
+    O --> CB
+    P --> LB["Load Balancers"]
+    CB --> W["Workflow Orchestration"]
+    LB --> W
+    W --> BP["Business Processes"]
+    CH["Chaos Monkey"] -. tests resilience .-> W
 ```
-                    Client
-                       │
-                       ▼
-                 API Gateway
-                       │
-                       ▼
-                 Discovery Service
-                       │
-      ┌────────────────┼────────────────┐
-      ▼                ▼                ▼
- User Service    Order Service   Product Service
-      │                │                │
-      └────────────┬───┘                │
-                   ▼                    ▼
-             Circuit Breakers     Load Balancers
-                   │                    │
-                   └─────────┬──────────┘
-                             ▼
-                  Workflow Orchestration
-                             │
-                             ▼
-                     Business Processes
 
-        Chaos Monkey continuously tests
-        the resilience of the entire system
-```
+Chaos Monkey continuously tests the resilience of the entire system.
 
 These concepts are rarely deployed in isolation. In modern cloud-native platforms, they complement each other to provide **scalability, resilience, fault tolerance, maintainability, and operational reliability**, which are the primary goals of a microservices architecture.
 
@@ -987,7 +991,12 @@ Kubernetes automates:
 
 A typical deployment architecture looks as follows:
 
-&#x20;                Kubernetes Cluster         ┌────────────────────────────┐         │          Control Plane     │         └──────────────┬─────────────┘                        │        ┌───────────────┼───────────────┐        ▼               ▼               ▼    Worker 1       Worker 2       Worker 3    Product Pod    Order Pod      Payment Pod    Product Pod    Gateway Pod    Product Pod
+```mermaid
+flowchart TD
+    CP["Control Plane"] --> W1["Worker 1<br/>Product Pod, Product Pod"]
+    CP --> W2["Worker 2<br/>Order Pod, Gateway Pod"]
+    CP --> W3["Worker 3<br/>Payment Pod, Product Pod"]
+```
 
 If a container crashes, Kubernetes automatically creates a replacement instance.
 
@@ -1034,11 +1043,20 @@ A service mesh is an infrastructure layer responsible for managing communication
 
 Istio deploys a lightweight **sidecar proxy** (typically Envoy) alongside each microservice instance.
 
-+-----------------------+| Product Service       |+-----------------------+| Envoy Sidecar Proxy   |+-----------------------+
-
 All network traffic passes through these proxies.
 
-Service A   │ Envoy   │   ▼ Envoy   │Service B
+```mermaid
+flowchart TD
+    subgraph PodA["Pod"]
+        A["Service A"] --- EA["Envoy sidecar"]
+    end
+    subgraph PodB["Pod"]
+        EB["Envoy sidecar"] --- B["Service B"]
+    end
+    EA --> EB
+```
+
+![Service Mesh](./imgs/serviceMesh.jpg)
 
 This approach allows Istio to manage communication without modifying application code.
 
@@ -1055,8 +1073,10 @@ Istio supports:
 
 Example:
 
-```
-90% -> Product Service v110% -> Product Service v2
+```mermaid
+flowchart LR
+    T["Incoming traffic"] -- 90% --> V1["Product Service v1"]
+    T -- 10% --> V2["Product Service v2"]
 ```
 
 This enables gradual deployment of new versions.
@@ -1106,7 +1126,19 @@ without requiring developers to implement these capabilities repeatedly in each 
 
 These technologies complement one another and together form a modern cloud-native microservices platform:
 
-&#x20;               Client                   │                   ▼             API Gateway                   │                   ▼                Istio                   │       ┌───────────┼───────────┐       ▼           ▼           ▼  Spring Boot  Spring Boot  Spring Boot   Service A    Service B    Service C       └──────── Containers ────────┘              Docker / Podman                   │                   ▼              Kubernetes                   │                   ▼             Cloud Infrastructure\`\`
+```mermaid
+flowchart TD
+    C["Client"] --> G["API Gateway"]
+    G --> I["Istio"]
+    I --> A["Spring Boot Service A"]
+    I --> B["Spring Boot Service B"]
+    I --> D["Spring Boot Service C"]
+    A --> CT["Containers: Docker / Podman"]
+    B --> CT
+    D --> CT
+    CT --> K["Kubernetes"]
+    K --> CI["Cloud Infrastructure"]
+```
 
 In this architecture:
 
@@ -1130,14 +1162,11 @@ A load balancer is typically used to spread traffic across available instances, 
 
 Example:
 
-```
-                 Load Balancer
-                        │
-       ┌────────────────┼────────────────┐
-       ▼                ▼                ▼
-
- Product Service   Product Service   Product Service
-   Instance 1        Instance 2        Instance 3
+```mermaid
+flowchart TD
+    LB["Load Balancer"] --> I1["Product Service<br/>Instance 1"]
+    LB --> I2["Product Service<br/>Instance 2"]
+    LB --> I3["Product Service<br/>Instance 3"]
 ```
 
 If user demand increases, additional instances can be started automatically:
@@ -1169,6 +1198,16 @@ Instead of replicating the same functionality, services perform different tasks.
 Example:
 
 User ServiceProduct ServiceRecommendation ServiceNews ServiceOrder ServicePayment Service
+
+```mermaid
+flowchart LR
+    U["User Service"]
+    P["Product Service"]
+    R["Recommendation Service"]
+    N["News Service"]
+    O["Order Service"]
+    PA["Payment Service"]
+```
 
 Each service manages its own logic and data.
 
@@ -1213,7 +1252,17 @@ Requests are routed according to the customer's surname.
 
 For example:
 
-Smith  → Service R-ZAnderson → Service A-E
+```mermaid
+flowchart TD
+    R["Request routing by surname"] --> A["Customer Service A-E"]
+    R --> F["Customer Service F-L"]
+    R --> M["Customer Service M-Q"]
+    R --> Z["Customer Service R-Z"]
+    Anderson["Anderson"] -.-> A
+    Smith["Smith"] -.-> Z
+```
+
+![Data Decomposition Example](./imgs/data-decomposition.jpg)
 
 Another common partitioning method is based on:
 
@@ -1222,10 +1271,6 @@ Another common partitioning method is based on:
 * Product categories
 * Numerical ranges
 * Tenant identifiers in multi-tenant systems
-
-Example:
-
-Customer IDs 1-999999Customer IDs 1000000-1999999Customer IDs
 
 #### Advantages
 
@@ -1261,31 +1306,19 @@ In practice, these decomposition approaches are rarely used in isolation. Most l
 
 For example:
 
-```
-                    API Gateway
-                           │
-
-        ┌──────────────────┼──────────────────┐
-        ▼                  ▼                  ▼
-
- Product Service     User Service     Recommendation Service
-   (functional)       (functional)         (functional)
-
-        │
-        ▼
-
-    A-F Partition
-    G-L Partition
-    M-R Partition
-    S-Z Partition
-      (data)
-
-        │
-        ▼
-
- Multiple Replicas
-   via Kubernetes
-   (horizontal)
+```mermaid
+flowchart TD
+    G["API Gateway"] --> P["Product Service (functional)"]
+    G --> U["User Service (functional)"]
+    G --> R["Recommendation Service (functional)"]
+    P --> P1["A-F Partition (data)"]
+    P --> P2["G-L Partition (data)"]
+    P --> P3["M-R Partition (data)"]
+    P --> P4["S-Z Partition (data)"]
+    P1 --> K["Multiple replicas via Kubernetes (horizontal)"]
+    P2 --> K
+    P3 --> K
+    P4 --> K
 ```
 
 In this example:

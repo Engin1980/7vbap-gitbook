@@ -55,6 +55,8 @@ The primary benefit of asynchronous execution is improved resource utilization. 
 
 The distinction between synchronous and asynchronous behavior can be understood through a real-world analogy. Imagine a customer visiting a restaurant. In a synchronous scenario, the customer places an order and remains standing at the counter until the meal is prepared. Only then can the customer continue. In an asynchronous scenario, the customer places the order, receives a number, sits down, and continues with other activities until the meal is ready. The work still takes the same amount of time, but the waiting period is utilized more effectively.
 
+![Sync vs. Async](./imgs/syncasync.jpg)
+
 It is important to understand that asynchronous programming does not necessarily make an operation faster. A database query that requires five seconds will still require approximately five seconds. The difference is that the caller does not spend those five seconds blocked and idle. Instead, the system can perform useful work while waiting for the result.
 
 For this reason, modern distributed systems often combine both approaches. Synchronous communication is commonly used when an immediate result is required, whereas asynchronous communication is preferred for long-running tasks, background processing, notifications, and other operations where immediate feedback is not essential.
@@ -224,8 +226,7 @@ The idea behind **Remote Procedure Call (RPC)** is to make a remote operation ap
 Instead of constructing network messages manually, the developer invokes a method:
 
 ```java
-Customer customer =
-        customerService.getCustomer(123);
+Customer customer = customerService.getCustomer(123); // common Java call
 ```
 
 Behind the scenes, the framework:
@@ -299,15 +300,15 @@ Because of its performance characteristics and strong typing, gRPC has become pa
 
 The discussed synchronous communication techniques operate at different abstraction levels.
 
-| Technique  | Abstraction Level                 | Message Format   | Main Strength                         |
-| ---------- | --------------------------------- | ---------------- | ------------------------------------- |
-| TCP        | Transport protocol                | Raw bytes        | Reliability and efficiency            |
-| Sockets    | Programming interface             | Arbitrary        | Maximum flexibility                   |
-| HTTP       | Application protocol              | Text or binary   | Simplicity and interoperability       |
-| WebSockets | Persistent communication protocol | Messages         | Real-time bidirectional communication |
-| SOAP       | Service protocol                  | XML              | Enterprise-level standardization      |
-| RPC        | Programming model                 | Various          | Transparency of remote calls          |
-| gRPC       | RPC framework                     | Protocol Buffers | High performance and strong typing    |
+| Technique  | Abstraction Level                 | Message Format   | Main Strength                         | Usage |
+| ---------- | --------------------------------- | ---------------- | ------------------------------------- | ---- |
+| TCP        | Transport protocol                | Raw bytes        | Reliability and efficiency            | Indirect, as a layer for other technologies |
+| Sockets    | Programming interface             | Arbitrary        | Maximum flexibility                   | Raw (bytes) bidirectional data transfer |
+| HTTP       | Application protocol              | Text or binary   | Simplicity and interoperability       | Protocol-based transfer |
+| WebSockets | Persistent communication protocol | Messages         | Real-time bidirectional communication | Bidirectional data transfer |
+| SOAP       | Service protocol                  | XML              | Enterprise-level standardization      | Standardized complex object transfer |
+| RPC        | Programming model                 | Various          | Transparency of remote calls          | Local-like calls to remote machines |
+| gRPC       | RPC framework                     | Protocol Buffers | High performance and strong typing    | Local-like calls to remote machines on different technologies |
 
 These technologies should not be viewed as direct competitors in all situations. Rather, they occupy different layers of the communication stack and address different requirements. For example, HTTP, SOAP, and gRPC typically use TCP underneath, while sockets provide the programming interface through which TCP communication is often implemented. RPC and gRPC focus on simplifying distributed programming, whereas WebSockets are specifically designed for long-lived bidirectional communication.
 
@@ -479,6 +480,16 @@ Consumer B -> reading Event 1
 Consumer C -> reading Event 4
 ```
 
+```mermaid
+flowchart LR
+    subgraph Log["Topic log"]
+        E1["Event 1"] --> E2["Event 2"] --> E3["Event 3"] --> E4["Event 4"]
+    end
+    CB["Consumer B"] -. reading .-> E1
+    CA["Consumer A"] -. reading .-> E3
+    CC["Consumer C"] -. reading .-> E4
+```
+
 This allows several consumers to read the same events independently.
 
 Unlike traditional queues, Kafka treats events as a persistent stream of historical records. This enables capabilities such as:
@@ -542,6 +553,13 @@ Stream
 2: OrderCreated
 3: PaymentApproved
 --------------------------------
+```
+
+```mermaid
+flowchart LR
+    subgraph Stream["Redis Stream"]
+        S1["1: UserCreated"] --> S2["2: OrderCreated"] --> S3["3: PaymentApproved"]
+    end
 ```
 
 Consumers can track their reading position and continue after failures.

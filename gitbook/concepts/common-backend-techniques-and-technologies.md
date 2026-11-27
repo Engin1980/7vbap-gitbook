@@ -1,12 +1,15 @@
 # Common Backend Techniques and Technologies
 
-TODO IMG
+![Backend Infrastructure](./imgs/backend-info.jpg)
 
 ## Infractructure
 
 ### Kubernetes
 
 Kubernetes is an open-source container orchestration platform used to automate the deployment, scaling, and management of containerized applications. Instead of running individual containers manually, Kubernetes groups them into logical units called pods and manages their lifecycle across a cluster of machines. It provides features such as automatic scaling, load balancing, self-healing, rolling updates, and service discovery. Kubernetes has become the de facto standard for running modern cloud-native applications because it simplifies the management of large distributed systems.
+
+![Kubernetes](./imgs/kubernetes.jpg)
+
 
 ### Private Cloud
 
@@ -163,6 +166,8 @@ Tracing helps answer questions such as:
 
 A trace is typically composed of multiple spans. A span represents a single operation, such as an API call or database query. By combining spans, tracing systems can reconstruct the complete request flow and visualize it as a timeline.
 
+![Tracing](./imgs/tracing.jpg)
+
 Popular tracing technologies include OpenTelemetry, Jaeger, and Zipkin. These tools allow developers to identify bottlenecks, diagnose failures, and optimize application performance in complex distributed environments.
 
 ### Relationship Between Monitoring, Logging, Events, and Tracing
@@ -178,6 +183,8 @@ Events answer **"Which important action occurred?"** and often trigger reactions
 Tracing answers **"How did this request travel through the system?"** by tracking a request across multiple services.
 
 Together, monitoring, logging, events, and tracing form the foundation of modern system observability, allowing engineers to understand, operate, troubleshoot, and optimize complex distributed applications.
+
+![Observability](./imgs/observability.jpg)
 
 ## Languages
 

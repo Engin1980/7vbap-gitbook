@@ -42,6 +42,8 @@ Today, the terms are often confused. Strictly speaking:
 
 The most widely used Swagger tool is **Swagger UI**, which generates an interactive web interface directly from an OpenAPI document. Instead of reading static documentation, developers can browse endpoints, view request and response models, and even execute API calls directly from the browser.
 
+TODO IMG: Mock-up of a Swagger UI page: a list of colored endpoint rows (green GET /customers/{id}, blue POST /customers, red DELETE /customers/{id}), with one row expanded showing parameters, a response schema, example JSON and a 'Try it out' button. Clean UI mock-up, flat style, English labels.
+
 A typical Swagger UI page presents information such as:
 
 ```
@@ -82,6 +84,8 @@ Customer customer =
 Without OpenAPI, such client code would need to be written manually.
 
 OpenAPI plays a particularly important role in microservice architectures. When dozens or hundreds of services communicate with one another, manually maintaining documentation becomes impractical. The API specification becomes a single source of truth from which documentation, tests, and client code can all be generated automatically.
+
+![OpenAPI](./imgs/openaip.jpg)
 
 For this reason, OpenAPI is often considered an example of the **API First** approach. In this methodology, developers first define the API contract and only then implement the service itself. This reduces misunderstandings between teams, encourages consistency, and allows parallel development of clients and servers.
 
