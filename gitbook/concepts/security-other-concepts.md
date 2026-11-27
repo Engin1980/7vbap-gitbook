@@ -12,6 +12,14 @@ The foundation is the **Same-Origin Policy (SOP)**, a security rule built into e
 
 Modern applications often need what SOP forbids: a single-page application at `https://app.example.com` calls a REST API at `https://api.example.com`. **CORS (Cross-Origin Resource Sharing)** is the mechanism by which the *server* tells the browser which other origins are allowed to read its responses. It is implemented through HTTP headers, and the browser enforces it.
 
+Cross-Origin Resource Sharing (CORS) is a security feature implemented in web browsers that controls how resources (pages, images, styles, ...) can be requested from a domain different than the **one serving the web page**. By default, browsers enforce the **same-origin policy**, which restricts web applications from making requests to a different origin (a combination of protocol, domain, and port) to prevent malicious behavior.&#x20;
+
+{% hint style="info" %}
+In the context of CORS, an **Origin** refers to the unique combination of a web page’s **scheme (protocol), host (domain), and port**. Together, these three elements define where a request is coming from. For example, `https://example.com:443` has a different origin than `http://example.com:80` because the protocol and port differ, even though the domain is the same. The browser uses this origin value to enforce the **same-origin policy**, meaning that scripts running on one origin cannot freely access resources from another origin unless explicitly permitted. This concept is fundamental to web security, as it prevents unauthorized cross-site interactions while still allowing controlled communication through CORS headers.
+{% endhint %}
+
+If CORS were disabled or did not exist, any website could freely make requests to other domains without restriction. This would expose users to **Cross-Site Request Forgery (CSRF)** and **data theft attacks**, where a malicious site could silently send requests to another site where the user is authenticated and steal sensitive information.
+
 For "simple" requests the browser sends the request with an `Origin` header and checks the response header `Access-Control-Allow-Origin`. For requests that may have side effects (for example a `PUT`/`DELETE`, or a request with the `Authorization` header or JSON `Content-Type`), the browser first sends a **preflight** request, an `OPTIONS` call asking "would you accept this method and these headers from this origin?".
 
 ```mermaid
@@ -51,7 +59,107 @@ During development, a proxy in the frontend dev server avoids the cross-origin s
 CORS typically does not show up while you develop and test the backend alone. Tools such as Bruno, Postman, `curl` or the Swagger UI served by the backend itself either are not browsers, so they do not enforce CORS at all, or they call the API from the same origin, so no cross-origin request occurs. The problem appears as soon as a **frontend application** running in a browser on a different origin (for example `http://localhost:3000` calling `http://localhost:8080`) starts to call the API. The browser then blocks the response, and the developer sees a "blocked by CORS policy" error in the console even though the very same request worked in Postman. In that case, the fix belongs to the backend configuration (or to a development proxy), not to the frontend code, and it is worth testing the CORS settings early with the real frontend.
 {% endhint %}
 
+### **CORS vs. Front/Backend Web Application**
+
+Why is it important w.r.t to the web applications? Imagine that the front-end and back-end share the same domain but differ by port, for example, a React front-end running on `https://shop.com:3000` and a SpringBoot backend API hosted on `https://shop.com:5000`. Even though they share the same domain name (`shop.com`), the **port numbers are different**, which means the browser treats them as **different origins**.
+
+If the browser downloads the front-end app from `https://shop.com:3000`, its origin is `https://shop.com:3000` and the **non-cross** requests can be sent only at `https://shop.com:3000`. But if the frontend makes a request at backend URL `https://shop.com:5000`, it requests a different origin (due to a different port number) and activates the CORS.
+
+### Setting Up
+
+#### **Front-end**
+
+On the **front-end side**, you generally cannot “allow” or configure CORS directly because CORS is enforced by the browser and controlled by the **server’s response headers**. The front-end simply makes requests, and the browser checks whether the back-end has permitted them.
+
+#### **Back-end**
+
+Allowing CORS on a back-end involves configuring the server to send specific HTTP headers that tell the browser which cross-origin requests are permitted. The most important header is `Access-Control-Allow-Origin`, which should be set to the exact front-end origin (e.g., `http://localhost:3000`) rather than a wildcard in production. In addition, the server must specify allowed HTTP methods with `Access-Control-Allow-Methods` (such as `GET, POST, PUT, DELETE`) and permitted request headers with `Access-Control-Allow-Headers` (like `Content-Type, Authorization`). For requests that include credentials (cookies or authentication tokens), the server must also send `Access-Control-Allow-Credentials: true`. Finally, the back-end should correctly handle **preflight OPTIONS requests**, which browsers automatically send before certain cross-origin calls, by responding with the same CORS headers. This setup ensures that the browser recognizes the back-end as a trusted source and allows the front-end to communicate securely.
+
+#####  SpringBoot
+
+In Spring Boot, enabling CORS typically means configuring the server to send the right headers back to the browser. This can be done in a few ways: you can annotate individual controller methods with `@CrossOrigin` to allow specific origins, or you can define a global CORS configuration using a `WebMvcConfigurer` bean. In both cases, you specify which origins, HTTP methods, and headers are permitted. This ensures that when your React front-end (running on a different port) makes requests, the Spring Boot back-end responds with the proper CORS headers so the browser allows the communication.
+
+An example of controller-level CORS setup:
+
+```java
+@RestController
+@RequestMapping("/api")
+public class ProductController {
+
+    // Allow requests from http://localhost:3000
+    @CrossOrigin(origins = "http://localhost:3000")
+    @GetMapping("/products")
+    public List<String> getProducts() {
+        return List.of("Laptop", "Phone", "Tablet");
+    }
+}
+```
+
+And an example of global CORS setup:
+
+```java
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+@Configuration
+public class CorsConfig {
+
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/**") // apply to all endpoints
+                        .allowedOrigins("http://localhost:3000") // front-end origin
+                        .allowedMethods("GET", "POST", "PUT", "DELETE") // allowed HTTP methods
+                        .allowedHeaders("*") // allow all headers
+                        .allowCredentials(true); // allow cookies/auth headers if needed
+            }
+        };
+    }
+}
+```
+
+##### .NET
+
+In a .NET REST API, enabling CORS is typically done by configuring it in the application’s startup pipeline. You register CORS policies in the service configuration (e.g., `builder.Services.AddCors(...)`) and then apply them in the middleware (`app.UseCors(...)`). Within the policy, you specify which origins, HTTP methods, and headers are allowed so that your front-end (running on a different port) can communicate with the back-end. This ensures the browser receives the proper CORS headers and permits cross-origin requests securely.
+
+```cs
+var builder = WebApplication.CreateBuilder(args);
+
+// Register CORS services
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:3000") // your React front-end origin
+                  .AllowAnyMethod()                     // allow GET, POST, PUT, DELETE, etc.
+                  .AllowAnyHeader()                     // allow all headers
+                  .AllowCredentials();                  // allow cookies/auth headers if needed
+        });
+});
+
+var app = builder.Build();
+
+// Enable CORS middleware
+app.UseCors("AllowFrontend");
+
+// definitions of endpoints or add controllers mapping here
+app.MapGet("/api/products", () =>
+{
+    return new[] { "Laptop", "Phone", "Tablet" };
+});
+
+app.Run();
+```
+
+
 ## CSRF - Cross-Site Request Forgery
+
+Cross-Site Request Forgery (CSRF) is a type of web security attack where a malicious website tricks a user’s browser into performing unwanted actions on another site where the user is already authenticated. Because **browsers automatically include cookies and session tokens with requests**, an attacker can exploit this by making the victim’s browser send requests (like transferring money, changing account settings, or posting data) without the user’s knowledge. In essence, CSRF takes advantage of the trust a web application has in the user’s browser, making it appear as though the user intentionally initiated the action. Proper defenses, such as CSRF tokens or same-site cookie settings, are used to prevent these unauthorized requests. 
 
 **How it arises.** Browsers attach cookies to every request sent to the cookie's domain, *regardless of which page triggered the request*. If a user is logged in to `bank.example` (a session cookie is stored) and then visits a malicious page, that page can make the browser send a request to the bank, for example by an auto-submitted hidden form:
 
@@ -62,6 +170,16 @@ CORS typically does not show up while you develop and test the backend alone. To
 </form>
 <script>document.forms[0].submit()</script>
 ```
+The schema is as follows:
+
+1. **User logs into Site A** The user successfully authenticates on Site A (e.g., their bank or social media platform). The browser stores an authorization cookie or session token for that site.
+2. **Browser automatically keeps the cookie** Whenever the user’s browser sends requests to Site A, it automatically includes the stored cookie, proving the user is authenticated.
+3. **User visits a malicious Site B** While still logged into Site A, the user unknowingly navigates to Site B, which is controlled by an attacker.
+4. **Malicious request is embedded** Site B contains hidden code (like a form, image, or script) that sends a crafted request to Site A. The browser, following its normal behavior, attaches the user’s cookie to this request.
+5. **Site A processes the request** Because Site A sees a valid cookie, it assumes the request is legitimate and executes the action (e.g., transferring money, changing account settings).
+6. **Result: unintended action** The user’s account on Site A is modified without their knowledge or consent, completing the CSRF attack.
+
+![CSRF Illustration](./imgs/csrf.jpg)
 
 The browser dutifully attaches the user's session cookie, and the bank sees a perfectly authenticated request.
 
@@ -82,9 +200,31 @@ sequenceDiagram
 
 **Solutions.** All defences rely on the same idea: the server must be able to tell a request that was really initiated by its own application from one that was triggered by a foreign site. There are three main techniques, which can be combined, followed by several supporting measures. See also [CSRF - Cross-Site Request Forgery](../general-topics/csrf-cross-site-request-forgery.md).
 
-#### 1. SameSite Cookie Attribute
+To protect applications from CSRF attacks, developers need to implement multiple layers of defense that ensure requests truly come from the intended user and origin. Here are the most common strategies:
+
+* **Use CSRF tokens**: Generate unique, unpredictable tokens for each session or request and validate them server-side.
+* **Enable SameSite cookies**: Configure cookies with `SameSite=Lax` or `Strict` to prevent them from being sent with cross-site requests.
+* **Check request origin**: Validate the `Origin` or `Referer` headers to confirm that requests come from trusted domains.
+* **Restrict sensitive actions to POST/PUT/DELETE**: Avoid using GET requests for state-changing operations, since they can be easily triggered by attackers.
+* **Require re-authentication for critical actions**: Ask users to re-enter credentials or confirm actions (like password changes or money transfers).
+
+### 1. SameSite Cookie Attribute
 
 The most effective modern defence is the **`SameSite` cookie attribute**, which instructs the browser *not to attach the cookie* to requests initiated from another site. With `SameSite=Strict`, the cookie is never sent in a cross-site request; `Lax` additionally allows it for top-level navigations using safe methods (a click on a link), which keeps links to your site working for logged-in users; `None` (with `Secure`) disables the protection. `Lax` is the default in current browsers, but it is better to set it explicitly. The advantage is that it needs no code on either side. A limitation is that it protects only against *cross-site* requests (not requests from a sibling subdomain under the same site), and it depends on the browser behaviour, so it is often combined with another technique.
+
+**SameSite cookies** are a browser security feature designed to help protect against **Cross-Site Request Forgery (CSRF)** and certain types of cross-site tracking. They control whether cookies are sent along with requests that originate from different sites. By setting the `SameSite` attribute on a cookie, developers can specify how strictly the browser should limit its use:
+
+* **SameSite=Strict** - Cookies are sent **only** when the request originates from the same site. If the user clicks a link from another site, the cookie will not be included. This offers the strongest CSRF protection but can break some cross-site functionality.
+* **SameSite=Lax** - Cookies are sent for same-site requests and for top-level navigation (like clicking a link), but not for background requests (like images or iframes). Moreover, those requests must use safe HTTP methods (like GET). This is a balanced default that protects against most CSRF attacks while allowing common user flows (like opening the link from e-mail to view product).
+* **SameSite=None** - Cookies are sent with all requests, including cross-site ones, but must also be marked as `Secure` (only sent over HTTPS). This is necessary for scenarios like third-party APIs or embedded content, but it reintroduces CSRF risks if not combined with other protections.
+
+![SameSite cookie behavior demonstration](./imgs/samesite.jpg)
+
+By configuring `SameSite` correctly, developers reduce the chance that a malicious site can trick a user’s browser into sending cookies to another domain without their knowledge. It’s a simple but powerful layer of defense against CSRF.
+
+{% hint style="info" %}
+**Important note:** If you set SameSite=None, you must also set the **Secure** attribute (cookie is only sent over HTTPS), otherwise modern browsers will refuse to store the cookie at all.
+{% endhint %}
 
 ```mermaid
 sequenceDiagram
@@ -100,9 +240,11 @@ sequenceDiagram
     B-->>V: 401 Unauthorized - no session
 ```
 
-#### 2. Synchronizer CSRF Token
+### 2. Synchronizer CSRF Token
 
 The classic defence is the **synchronizer token pattern**. The server generates an unpredictable random token, stores it in the user's session, and embeds it in every form or hands it to the frontend. Every state-changing request must carry this token (as a hidden field or a custom header), and the server compares it with the value stored in the session. A malicious site can make the browser send the cookie, but it cannot **read** the token (Same-Origin Policy), so it cannot include it in the forged request. The approach is robust, but it needs server-side state (the token is kept in the session), so it fits traditional server-rendered applications best. Spring Security enables it by default.
+
+The back-end generates a unique, unpredictable token and sends it to the front-end, often as part of the initial authentication response. The front-end then stores this token securely in memory (e.g., in application state or a JavaScript variable, not in cookies or local storage) and attaches it to every subsequent API request, usually in a custom HTTP header such as `X-CSRF-Token`. On the server side, the back-end validates the token against the user’s session or a server-side store. If the token is missing or invalid, the request is rejected. This ensures that only requests intentionally initiated by the legitimate front-end are accepted, effectively blocking CSRF attacks in REST-based applications.
 
 ```mermaid
 sequenceDiagram
@@ -123,9 +265,16 @@ sequenceDiagram
     B-->>V: 403 Forbidden
 ```
 
-#### 3. Double Submit Cookie
+### 3. Double Submit Cookie
 
 The **double submit cookie** is a stateless variant, suitable for single-page applications and APIs where the server does not want to keep tokens in a session. The server sets a random token in a cookie (which JavaScript from the own site is allowed to read), and the frontend copies the same value into a request header (for example `X-XSRF-TOKEN`) on each state-changing request. The server only checks that the cookie value and the header value are identical. A foreign site can make the browser send the cookie, but it cannot read it and therefore cannot set the matching header. Angular and many other frontend libraries support this pattern out of the box. It is simpler for the server, but a bit weaker than the synchronizer token (for example, it is less secure when an attacker can set cookies through a vulnerable subdomain), so a signed or session-bound token value is recommended.
+
+* **Step 1: Server issues a CSRF token** When the user authenticates, the back-end generates a random CSRF token and sets it in a cookie (e.g., `csrfToken=abc123`).
+* **Step 2: Front-end reads the cookie** The front-end retrieves the token value from the cookie (using JavaScript) and attaches it to every API request in a custom header (e.g., `X-CSRF-Token: abc123`).
+* **Step 3: Server validates the request** On each request, the server compares the CSRF token in the cookie with the token in the custom header.
+  * If they match → the request is considered legitimate.
+  * If they don’t match or the header is missing → the request is rejected.
+
 
 ```mermaid
 sequenceDiagram
@@ -145,7 +294,7 @@ sequenceDiagram
     B-->>V: 403 Forbidden
 ```
 
-#### Supporting Measures
+### Supporting Measures
 
 Further measures strengthen the techniques above. The server can check the `Origin` and `Referer` headers and reject requests that come from an unexpected origin. It can require a custom header such as `X-Requested-With` (a cross-site form cannot set it, and a script can add it only with the permission of CORS). Most importantly, the application must **never change state with `GET` requests**, because `GET` can be triggered by a simple image tag or link. For sensitive operations (changing a password or e-mail, payments), it is good to ask the user for the password or a second factor again, which a forged request cannot supply.
 
