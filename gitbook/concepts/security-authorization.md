@@ -2,7 +2,7 @@
 
 ## Authorization Basics
 
-In the previous chapter ([Security - Authentication](security-authentication.md)) we dealt with proving who the user is. This chapter focuses on two closely related problems. The first is **authorization** (*AuthZ*): deciding whether an already identified user may perform a particular operation on a particular resource. The second is how the application **remembers the authenticated user** between requests, because HTTP is stateless and the server would otherwise ask for credentials with every request.
+In the previous chapter ([Security - Authentication](security-authentication.md)) we dealt with proving who the user is. This chapter focuses on two closely related problems. The first is **authorization** (_AuthZ_): deciding whether an already identified user may perform a particular operation on a particular resource. The second is how the application **remembers the authenticated user** between requests, because HTTP is stateless and the server would otherwise ask for credentials with every request.
 
 The two questions are often mixed together in practice, because the same artifact (a session identifier or a token) usually carries both the identity and the information needed for authorization decisions. Still, it is useful to keep them conceptually separate.
 
@@ -12,11 +12,11 @@ There are several well-known models for deciding who may do what. They differ in
 
 **Role-Based Access Control (RBAC)** assigns users to roles (`USER`, `MANAGER`, `ADMIN`) and permissions are attached to roles. It is simple, easy to understand and sufficient for most applications. Its weakness is "role explosion" when the rules become more detailed (for example `MANAGER_OF_PRAGUE_BRANCH`).
 
-**Permission-based (scope-based) access** lets the user or token hold fine-grained permissions such as `invoice:read` or `invoice:write`. Roles then become only a convenient bundle of permissions. OAuth 2.0 *scopes* are an example.
+**Permission-based (scope-based) access** lets the user or token hold fine-grained permissions such as `invoice:read` or `invoice:write`. Roles then become only a convenient bundle of permissions. OAuth 2.0 _scopes_ are an example.
 
 **Attribute-Based Access Control (ABAC)** evaluates rules over attributes of the user, the resource and the context: "a doctor may read a record of a patient assigned to their department during working hours". It is very flexible, but harder to design, test and audit.
 
-**Ownership checks** are often forgotten. A user with the role `USER` may read invoices, but only *their own*. This kind of rule depends on the data and must be checked in the business logic (for example `invoice.getOwnerId().equals(currentUserId)`). Missing ownership checks are the cause of a very common vulnerability called *Insecure Direct Object Reference* (IDOR) or *Broken Object Level Authorization*, which is at the top of the OWASP API Security list.
+**Ownership checks** are often forgotten. A user with the role `USER` may read invoices, but only _their own_. This kind of rule depends on the data and must be checked in the business logic (for example `invoice.getOwnerId().equals(currentUserId)`). Missing ownership checks are the cause of a very common vulnerability called _Insecure Direct Object Reference_ (IDOR) or _Broken Object Level Authorization_, which is at the top of the OWASP API Security list.
 
 **Access-control lists (ACL)** attach permissions directly to individual objects ("Alice can edit document 42"). They are very precise, but they are expensive to maintain at scale.
 
@@ -45,7 +45,7 @@ sequenceDiagram
 
 The main advantage is that the server is in full control. Logging out or banning a user is trivial: the session is deleted and it stops working immediately. The cookie contains no data, only an opaque identifier, and with the flags `HttpOnly`, `Secure` and `SameSite` it is well protected against theft by scripts. The approach is mature and supported out of the box by Spring Security.
 
-The disadvantages are related to scalability and architecture. The server must **keep state**. With multiple instances behind a load balancer, you need either *sticky sessions* or a shared session store, which is another component that must be operated and which becomes a potential bottleneck. Sessions are also awkward for mobile clients and for communication between different domains and services, since cookies are tied to browsers and domains. Finally, because cookies are sent automatically, session-based applications are exposed to **CSRF** (see [Security - Other concepts](security-other-concepts.md)).
+The disadvantages are related to scalability and architecture. The server must **keep state**. With multiple instances behind a load balancer, you need either _sticky sessions_ or a shared session store, which is another component that must be operated and which becomes a potential bottleneck. Sessions are also awkward for mobile clients and for communication between different domains and services, since cookies are tied to browsers and domains. Finally, because cookies are sent automatically, session-based applications are exposed to **CSRF** (see [Security - Other concepts](security-other-concepts.md)).
 
 ## JSON Web Token (JWT)
 
@@ -72,7 +72,7 @@ The **header** describes the token itself, mainly the signing algorithm (`alg`) 
 { "alg": "RS256", "typ": "JWT", "kid": "key-2026-01" }
 ```
 
-The **payload** contains the claims. The standard defines several *registered claims*: `iss` (issuer, who created the token), `sub` (subject, usually the user ID), `aud` (audience, for whom the token is intended), `exp` (expiration time), `nbf` (not valid before), `iat` (issued at) and `jti` (unique token ID). In addition, the application adds its own claims, for example roles or the e-mail:
+The **payload** contains the claims. The standard defines several _registered claims_: `iss` (issuer, who created the token), `sub` (subject, usually the user ID), `aud` (audience, for whom the token is intended), `exp` (expiration time), `nbf` (not valid before), `iat` (issued at) and `jti` (unique token ID). In addition, the application adds its own claims, for example roles or the e-mail:
 
 ```json
 {
@@ -102,15 +102,16 @@ flowchart LR
     P --> T
     S --> T
 ```
-![JWT](./imgs/jwt.jpg)
+
+![JWT](../.gitbook/assets/jwt.jpg)
 
 {% hint style="warning" %}
-The payload is only **encoded**, not encrypted. Anybody who obtains the token can read it (paste it into jwt.io and see). Never put passwords, personal data or other secrets into an ordinary signed JWT.
+The payload is only **encoded**, not encrypted. Anybody who obtains the token can read it (paste it into [http://jwt.io](http://jwt.io/) and see on your own). Never put passwords/hashes, personal data or other secrets into an ordinary signed JWT.
 {% endhint %}
 
 ### Common JWT Claims
 
-<table data-header-hidden><thead><tr><th width="107"></th><th width="159"></th><th width="280"></th><th></th></tr></thead><tbody><tr><td>Claim Key</td><td>Name</td><td>Purpose</td><td>Example Value</td></tr><tr><td><code>sub</code></td><td>Subject *)</td><td>Identifies the user or entity the token refers to (id/email/...). </td><td><code>"12345"</code> </td></tr><tr><td><code>iss</code></td><td>Issuer</td><td>Identifies the authority that issued the token</td><td><code>"https://api.example.com"</code></td></tr><tr><td><code>aud</code></td><td>Audience</td><td>Specifies who the token is intended for</td><td><code>"my-frontend-app"</code></td></tr><tr><td><code>exp</code></td><td>Expiration Time *)</td><td>UNIX timestamp when the token expires</td><td><code>1712345678</code></td></tr><tr><td><code>iat</code></td><td>Issued At</td><td>UNIX timestamp when the token was created</td><td><code>1712331234</code></td></tr><tr><td><code>nbf</code></td><td>Not Before</td><td>Token becomes valid only after this time</td><td><code>1712335000</code></td></tr><tr><td><code>jti</code></td><td>JWT ID</td><td>A unique identifier for the token (useful for blacklist)</td><td><code>"token-abc-789"</code></td></tr></tbody></table>
+<table data-header-hidden><thead><tr><th width="107"></th><th width="159"></th><th width="280"></th><th></th></tr></thead><tbody><tr><td>Claim Key</td><td>Name</td><td>Purpose</td><td>Example Value</td></tr><tr><td><code>sub</code></td><td>Subject *)</td><td>Identifies the user or entity the token refers to (id/email/...).</td><td><code>"12345"</code></td></tr><tr><td><code>iss</code></td><td>Issuer</td><td>Identifies the authority that issued the token</td><td><code>"https://api.example.com"</code></td></tr><tr><td><code>aud</code></td><td>Audience</td><td>Specifies who the token is intended for</td><td><code>"my-frontend-app"</code></td></tr><tr><td><code>exp</code></td><td>Expiration Time *)</td><td>UNIX timestamp when the token expires</td><td><code>1712345678</code></td></tr><tr><td><code>iat</code></td><td>Issued At</td><td>UNIX timestamp when the token was created</td><td><code>1712331234</code></td></tr><tr><td><code>nbf</code></td><td>Not Before</td><td>Token becomes valid only after this time</td><td><code>1712335000</code></td></tr><tr><td><code>jti</code></td><td>JWT ID</td><td>A unique identifier for the token (useful for blacklist)</td><td><code>"token-abc-789"</code></td></tr></tbody></table>
 
 > \*) Items are typically mandatory.
 
@@ -157,7 +158,7 @@ This security holds only if the implementation is careful. Typical pitfalls are 
 
 The most important advantage is **statelessness**. The server needs no session store, so the application scales horizontally without any shared state, and each instance can verify the token on its own. JWT also works well across domains and different kinds of clients (browser, mobile app, another service), because it is simply sent in a request. A single token can be accepted by many services, which suits microservices and SSO. The claims carried in the token (user ID, roles) save a database lookup for each request.
 
-The disadvantages are equally important. A JWT **cannot be easily revoked**: once issued, it is valid until it expires, even if the user logged out, was banned or changed roles. Because of this, the lifetime of access tokens is kept short (minutes), and a *refresh token* is used to get new ones (see below). Revocation before expiry needs additional state (a blacklist of `jti`, or a version number checked against the database), which partly defeats the point of being stateless. Tokens are also larger than a session ID and are sent in every request. The data in the token can become **stale** (a role change takes effect only after the next token is issued). And finally, the client has to store the token somewhere, which creates its own security questions discussed later in this chapter.
+The disadvantages are equally important. A JWT **cannot be easily revoked**: once issued, it is valid until it expires, even if the user logged out, was banned or changed roles. Because of this, the lifetime of access tokens is kept short (minutes), and a _refresh token_ is used to get new ones (see below). Revocation before expiry needs additional state (a blacklist of `jti`, or a version number checked against the database), which partly defeats the point of being stateless. Tokens are also larger than a session ID and are sent in every request. The data in the token can become **stale** (a role change takes effect only after the next token is issued). And finally, the client has to store the token somewhere, which creates its own security questions discussed later in this chapter.
 
 There is one more, rather drastic way to revoke tokens: **changing the signing key**. Tokens signed with the old key no longer pass the signature check, so all of them become invalid at once. This is the standard reaction to a leaked or suspected-compromised key, and it is also how a "log out everybody" button can be implemented. The disadvantage is that it is not selective: every user is logged out (or forced to use the refresh token to obtain a new access token), and with a symmetric key all services that share the secret must be updated at the same time. With asymmetric keys and the `kid` header it is more comfortable, because the IdP can publish a new key, start signing with it, and later remove only the old key from the key set, so a planned **key rotation** is smooth and affects only tokens signed with the retired key. Selective revocation of a single token or a single user still requires the additional state mentioned above.
 
@@ -235,7 +236,7 @@ The key (or the URL from which the public key is downloaded) is configured in `a
 
 ### Access Token and Refresh Token
 
-Because a JWT is hard to revoke, the usual design uses two tokens. The **access token** is a short-lived JWT (5-15 minutes) used for calling the API. The **refresh token** is long-lived (days or weeks), is used *only* to obtain a new access token from the issuer, and is therefore sent to just one endpoint. Refresh tokens are typically stored on the server (or at least tracked there), so that they can be revoked, and are often **rotated**: each use gives a new refresh token and invalidates the previous one, so a stolen token is detected when both the attacker and the user try to use it. This design combines the scalability of stateless access tokens with the controllability of server-side state at a low cost, because the server is contacted only every few minutes instead of with every request.
+Because a JWT is hard to revoke, the usual design uses two tokens. The **access token** is a short-lived JWT (5-15 minutes) used for calling the API. The **refresh token** is long-lived (days or weeks), is used _only_ to obtain a new access token from the issuer, and is therefore sent to just one endpoint. Refresh tokens are typically stored on the server (or at least tracked there), so that they can be revoked, and are often **rotated**: each use gives a new refresh token and invalidates the previous one, so a stolen token is detected when both the attacker and the user try to use it. This design combines the scalability of stateless access tokens with the controllability of server-side state at a low cost, because the server is contacted only every few minutes instead of with every request.
 
 The following diagram shows the principle. The client works with the short-lived access token until the API rejects it as expired, and then it quietly obtains a new one using the refresh token, without bothering the user with a new login. The user has to log in again only when the refresh token itself expires or is revoked.
 
@@ -264,11 +265,11 @@ sequenceDiagram
 
 The right lifetimes are a compromise between security (the shorter, the smaller the window for misuse of a stolen token) and convenience (the longer, the fewer renewals and logins). The following values are typical starting points and should be adjusted to the risk of the application:
 
-| Token | Typical lifetime | Notes |
-| --- | --- | --- |
-| Access token | 5-15 minutes (up to 1 hour for low-risk applications) | Sent with every request, so it should be short; it limits the damage of a theft because it cannot be easily revoked |
-| Refresh token | Hours to days for sensitive applications (for example banking: minutes to hours of inactivity), 7-30 days for common web applications, longer for "remember me" or mobile apps | Sent only to the token endpoint; often has a sliding expiration (extended by activity) plus an absolute maximum, and is rotated on each use |
-| ID token (OpenID Connect) | Minutes | Only proves the login to the client application, it is not used to call APIs |
+| Token                     | Typical lifetime                                                                                                                                                               | Notes                                                                                                                                       |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Access token              | 5-15 minutes (up to 1 hour for low-risk applications)                                                                                                                          | Sent with every request, so it should be short; it limits the damage of a theft because it cannot be easily revoked                         |
+| Refresh token             | Hours to days for sensitive applications (for example banking: minutes to hours of inactivity), 7-30 days for common web applications, longer for "remember me" or mobile apps | Sent only to the token endpoint; often has a sliding expiration (extended by activity) plus an absolute maximum, and is rotated on each use |
+| ID token (OpenID Connect) | Minutes                                                                                                                                                                        | Only proves the login to the client application, it is not used to call APIs                                                                |
 
 The cooperation between the access token and refresh token works as follows:
 
@@ -300,14 +301,14 @@ The signature algorithm is the most important design decision for JWT.
 
 **Asymmetric signing (RSA or ECDSA, for example RS256, ES256)** uses a **key pair**. The issuer signs with the **private key**, which it never shares, and everybody else verifies with the **public key**, which can be published freely. A verifier can check a token but cannot create one. The cost is slightly slower operations (mainly signing with RSA), larger tokens and the need for key management. This variant fits **distributed systems, microservices, third-party consumers and any case where issuer and verifier are different parties**. EdDSA (Ed25519) is a modern alternative with small keys and fast operations, though support varies between libraries.
 
-| | Symmetric (HS256) | Asymmetric (RS256 / ES256) |
-| --- | --- | --- |
-| Keys | One shared secret | Private key (issuer), public key (everyone) |
-| Who can verify | Everyone who knows the secret | Everyone with the public key |
-| Who can forge | Everyone who knows the secret | Only the issuer |
-| Speed and size | Fast, small | Slower, larger |
-| Typical use | Monolith, one trust domain | Microservices, IdP, third parties |
-| Key rotation | Hard (all parties must change) | Easy with `kid` and published key set |
+|                | Symmetric (HS256)              | Asymmetric (RS256 / ES256)                  |
+| -------------- | ------------------------------ | ------------------------------------------- |
+| Keys           | One shared secret              | Private key (issuer), public key (everyone) |
+| Who can verify | Everyone who knows the secret  | Everyone with the public key                |
+| Who can forge  | Everyone who knows the secret  | Only the issuer                             |
+| Speed and size | Fast, small                    | Slower, larger                              |
+| Typical use    | Monolith, one trust domain     | Microservices, IdP, third parties           |
+| Key rotation   | Hard (all parties must change) | Easy with `kid` and published key set       |
 
 ### Identity Provider Issues, Services Consume
 
@@ -354,7 +355,7 @@ The server sends the token in a `Set-Cookie` header with protective flags and th
 Set-Cookie: access_token=eyJ...; HttpOnly; Secure; SameSite=Strict; Path=/api
 ```
 
-`HttpOnly` makes the cookie invisible to JavaScript, so XSS cannot read it. `Secure` means that it is sent only over HTTPS. `SameSite` restricts the cookie from being attached to cross-site requests, which is the main defence against CSRF. The advantages are therefore a strong protection against token theft and a transparent usage with no client code. The disadvantages: cookies are sent automatically, so CSRF protection must be considered (`SameSite`, CSRF tokens); they work well only when the frontend and the API share a site (or when CORS with credentials is correctly configured, see [Security - Other concepts](security-other-concepts.md)); they are less natural for mobile applications and third-party API clients; and cookies have a size limit of about 4 KB, which is a problem with big tokens. Note that XSS can still *use* the cookie by making requests from the victim's browser, although it cannot read it.
+`HttpOnly` makes the cookie invisible to JavaScript, so XSS cannot read it. `Secure` means that it is sent only over HTTPS. `SameSite` restricts the cookie from being attached to cross-site requests, which is the main defence against CSRF. The advantages are therefore a strong protection against token theft and a transparent usage with no client code. The disadvantages: cookies are sent automatically, so CSRF protection must be considered (`SameSite`, CSRF tokens); they work well only when the frontend and the API share a site (or when CORS with credentials is correctly configured, see [Security - Other concepts](security-other-concepts.md)); they are less natural for mobile applications and third-party API clients; and cookies have a size limit of about 4 KB, which is a problem with big tokens. Note that XSS can still _use_ the cookie by making requests from the victim's browser, although it cannot read it.
 
 ### In-Memory Storage
 
@@ -362,10 +363,10 @@ The token is kept only in a JavaScript variable (for example in the state of the
 
 ### Comparison
 
-| Storage | Readable by XSS | CSRF risk | Convenience | Note |
-| --- | --- | --- | --- | --- |
-| Local / session storage + `Authorization` header | Yes | No | High | Simple, widely used for SPAs |
-| `HttpOnly` cookie | No (but can be used) | Yes, needs `SameSite` / CSRF token | High | Best for same-site browser apps |
-| In memory + refresh token in `HttpOnly` cookie | Access token only while the page runs | Limited (refresh endpoint only) | Medium | Common recommended compromise |
+| Storage                                          | Readable by XSS                       | CSRF risk                          | Convenience | Note                            |
+| ------------------------------------------------ | ------------------------------------- | ---------------------------------- | ----------- | ------------------------------- |
+| Local / session storage + `Authorization` header | Yes                                   | No                                 | High        | Simple, widely used for SPAs    |
+| `HttpOnly` cookie                                | No (but can be used)                  | Yes, needs `SameSite` / CSRF token | High        | Best for same-site browser apps |
+| In memory + refresh token in `HttpOnly` cookie   | Access token only while the page runs | Limited (refresh endpoint only)    | Medium      | Common recommended compromise   |
 
 There is no universally perfect option. For browser applications, the commonly recommended approach is a short-lived access token held in memory and a refresh token in a protected cookie; for a simple student project, an `HttpOnly` cookie with `SameSite` or the `Authorization` header with a strict XSS defence are both acceptable. Regardless of storage, always use HTTPS, keep token lifetimes short, never put sensitive data into the payload, and validate every token on the server.

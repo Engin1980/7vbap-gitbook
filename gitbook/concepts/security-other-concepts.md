@@ -6,13 +6,13 @@ Authentication and authorization (see [Security - Authentication](security-authe
 
 ### Same-Origin Policy
 
-The foundation is the **Same-Origin Policy (SOP)**, a security rule built into every browser. An **origin** is the combination of *scheme*, *host* and *port*. So `https://app.example.com` and `https://api.example.com` are different origins, as are `http://example.com` and `https://example.com`, or `https://example.com` and `https://example.com:8443`. By default, JavaScript loaded from one origin may not **read** responses from another origin. Without it, any page you open could silently read your e-mail from another tab where you are logged in.
+The foundation is the **Same-Origin Policy (SOP)**, a security rule built into every browser. An **origin** is the combination of _scheme_, _host_ and _port_. So `https://app.example.com` and `https://api.example.com` are different origins, as are `http://example.com` and `https://example.com`, or `https://example.com` and `https://example.com:8443`. By default, JavaScript loaded from one origin may not **read** responses from another origin. Without it, any page you open could silently read your e-mail from another tab where you are logged in.
 
 ### CORS: Controlled Relaxation
 
-Modern applications often need what SOP forbids: a single-page application at `https://app.example.com` calls a REST API at `https://api.example.com`. **CORS (Cross-Origin Resource Sharing)** is the mechanism by which the *server* tells the browser which other origins are allowed to read its responses. It is implemented through HTTP headers, and the browser enforces it.
+Modern applications often need what SOP forbids: a single-page application at `https://app.example.com` calls a REST API at `https://api.example.com`. **CORS (Cross-Origin Resource Sharing)** is the mechanism by which the _server_ tells the browser which other origins are allowed to read its responses. It is implemented through HTTP headers, and the browser enforces it.
 
-Cross-Origin Resource Sharing (CORS) is a security feature implemented in web browsers that controls how resources (pages, images, styles, ...) can be requested from a domain different than the **one serving the web page**. By default, browsers enforce the **same-origin policy**, which restricts web applications from making requests to a different origin (a combination of protocol, domain, and port) to prevent malicious behavior.&#x20;
+Cross-Origin Resource Sharing (CORS) is a security feature implemented in web browsers that controls how resources (pages, images, styles, ...) can be requested from a domain different than the **one serving the web page**. By default, browsers enforce the **same-origin policy**, which restricts web applications from making requests to a different origin (a combination of protocol, domain, and port) to prevent malicious behavior.
 
 {% hint style="info" %}
 In the context of CORS, an **Origin** refers to the unique combination of a web page’s **scheme (protocol), host (domain), and port**. Together, these three elements define where a request is coming from. For example, `https://example.com:443` has a different origin than `http://example.com:80` because the protocol and port differ, even though the domain is the same. The browser uses this origin value to enforce the **same-origin policy**, meaning that scripts running on one origin cannot freely access resources from another origin unless explicitly permitted. This concept is fundamental to web security, as it prevents unauthorized cross-site interactions while still allowing controlled communication through CORS headers.
@@ -33,7 +33,7 @@ sequenceDiagram
     A-->>B: 200 OK + Access-Control-Allow-Origin
 ```
 
-CORS is frequently misunderstood. It is **not a protection of the server**: the request still reaches the server (and for simple requests is executed), and tools such as `curl` or Postman ignore CORS completely. It only prevents the *browser* from handing the response to a script from an untrusted origin. It is also the reason why "it works in Postman but not in the browser" is such a common problem for beginners.
+CORS is frequently misunderstood. It is **not a protection of the server**: the request still reaches the server (and for simple requests is executed), and tools such as `curl` or Postman ignore CORS completely. It only prevents the _browser_ from handing the response to a script from an untrusted origin. It is also the reason why "it works in Postman but not in the browser" is such a common problem for beginners.
 
 The threat comes from **misconfiguration**. Setting `Access-Control-Allow-Origin: *` together with credentials is forbidden by browsers, so developers "fix" the problem by reflecting any `Origin` back and allowing credentials, which lets any malicious site read the authenticated responses of the logged-in user. Another common mistake is trusting origins by a weak pattern match (`*.example.com.attacker.net`) or allowing the origin `null`.
 
@@ -53,7 +53,7 @@ CorsConfigurationSource corsConfigurationSource() {
 }
 ```
 
-During development, a proxy in the frontend dev server avoids the cross-origin situation entirely. See also the earlier topic [CORS - Cross-Origin Resource Sharing](../general-topics/cors-cross-origin-resource-sharing.md).
+During development, a proxy in the frontend dev server avoids the cross-origin situation entirely. See also the earlier topic [CORS - Cross-Origin Resource Sharing](/broken/pages/IcF6Hf5UOpakfneiNM6V).
 
 {% hint style="info" %}
 CORS typically does not show up while you develop and test the backend alone. Tools such as Bruno, Postman, `curl` or the Swagger UI served by the backend itself either are not browsers, so they do not enforce CORS at all, or they call the API from the same origin, so no cross-origin request occurs. The problem appears as soon as a **frontend application** running in a browser on a different origin (for example `http://localhost:3000` calling `http://localhost:8080`) starts to call the API. The browser then blocks the response, and the developer sees a "blocked by CORS policy" error in the console even though the very same request worked in Postman. In that case, the fix belongs to the backend configuration (or to a development proxy), not to the frontend code, and it is worth testing the CORS settings early with the real frontend.
@@ -75,7 +75,7 @@ On the **front-end side**, you generally cannot “allow” or configure CORS di
 
 Allowing CORS on a back-end involves configuring the server to send specific HTTP headers that tell the browser which cross-origin requests are permitted. The most important header is `Access-Control-Allow-Origin`, which should be set to the exact front-end origin (e.g., `http://localhost:3000`) rather than a wildcard in production. In addition, the server must specify allowed HTTP methods with `Access-Control-Allow-Methods` (such as `GET, POST, PUT, DELETE`) and permitted request headers with `Access-Control-Allow-Headers` (like `Content-Type, Authorization`). For requests that include credentials (cookies or authentication tokens), the server must also send `Access-Control-Allow-Credentials: true`. Finally, the back-end should correctly handle **preflight OPTIONS requests**, which browsers automatically send before certain cross-origin calls, by responding with the same CORS headers. This setup ensures that the browser recognizes the back-end as a trusted source and allows the front-end to communicate securely.
 
-#####  SpringBoot
+**SpringBoot**
 
 In Spring Boot, enabling CORS typically means configuring the server to send the right headers back to the browser. This can be done in a few ways: you can annotate individual controller methods with `@CrossOrigin` to allow specific origins, or you can define a global CORS configuration using a `WebMvcConfigurer` bean. In both cases, you specify which origins, HTTP methods, and headers are permitted. This ensures that when your React front-end (running on a different port) makes requests, the Spring Boot back-end responds with the proper CORS headers so the browser allows the communication.
 
@@ -122,7 +122,7 @@ public class CorsConfig {
 }
 ```
 
-##### .NET
+**.NET**
 
 In a .NET REST API, enabling CORS is typically done by configuring it in the application’s startup pipeline. You register CORS policies in the service configuration (e.g., `builder.Services.AddCors(...)`) and then apply them in the middleware (`app.UseCors(...)`). Within the policy, you specify which origins, HTTP methods, and headers are allowed so that your front-end (running on a different port) can communicate with the back-end. This ensures the browser receives the proper CORS headers and permits cross-origin requests securely.
 
@@ -156,12 +156,11 @@ app.MapGet("/api/products", () =>
 app.Run();
 ```
 
-
 ## CSRF - Cross-Site Request Forgery
 
-Cross-Site Request Forgery (CSRF) is a type of web security attack where a malicious website tricks a user’s browser into performing unwanted actions on another site where the user is already authenticated. Because **browsers automatically include cookies and session tokens with requests**, an attacker can exploit this by making the victim’s browser send requests (like transferring money, changing account settings, or posting data) without the user’s knowledge. In essence, CSRF takes advantage of the trust a web application has in the user’s browser, making it appear as though the user intentionally initiated the action. Proper defenses, such as CSRF tokens or same-site cookie settings, are used to prevent these unauthorized requests. 
+Cross-Site Request Forgery (CSRF) is a type of web security attack where a malicious website tricks a user’s browser into performing unwanted actions on another site where the user is already authenticated. Because **browsers automatically include cookies and session tokens with requests**, an attacker can exploit this by making the victim’s browser send requests (like transferring money, changing account settings, or posting data) without the user’s knowledge. In essence, CSRF takes advantage of the trust a web application has in the user’s browser, making it appear as though the user intentionally initiated the action. Proper defenses, such as CSRF tokens or same-site cookie settings, are used to prevent these unauthorized requests.
 
-**How it arises.** Browsers attach cookies to every request sent to the cookie's domain, *regardless of which page triggered the request*. If a user is logged in to `bank.example` (a session cookie is stored) and then visits a malicious page, that page can make the browser send a request to the bank, for example by an auto-submitted hidden form:
+**How it arises.** Browsers attach cookies to every request sent to the cookie's domain, _regardless of which page triggered the request_. If a user is logged in to `bank.example` (a session cookie is stored) and then visits a malicious page, that page can make the browser send a request to the bank, for example by an auto-submitted hidden form:
 
 ```html
 <form action="https://bank.example/transfer" method="POST">
@@ -170,6 +169,7 @@ Cross-Site Request Forgery (CSRF) is a type of web security attack where a malic
 </form>
 <script>document.forms[0].submit()</script>
 ```
+
 The schema is as follows:
 
 1. **User logs into Site A** The user successfully authenticates on Site A (e.g., their bank or social media platform). The browser stores an authorization cookie or session token for that site.
@@ -179,7 +179,7 @@ The schema is as follows:
 5. **Site A processes the request** Because Site A sees a valid cookie, it assumes the request is legitimate and executes the action (e.g., transferring money, changing account settings).
 6. **Result: unintended action** The user’s account on Site A is modified without their knowledge or consent, completing the CSRF attack.
 
-![CSRF Illustration](./imgs/csrf.jpg)
+![CSRF Attack Illustration](<../.gitbook/assets/csrf (1).jpg>)
 
 The browser dutifully attaches the user's session cookie, and the bank sees a perfectly authenticated request.
 
@@ -189,7 +189,8 @@ sequenceDiagram
     participant B as bank.example
     participant E as evil.example
 
-    V->>B: login (session cookie stored)
+    V->>B: login
+    B -->>V: store session cookie in browser
     V->>E: opens a malicious page
     E-->>V: page with hidden form
     V->>B: POST /transfer + session cookie (sent automatically)
@@ -198,7 +199,7 @@ sequenceDiagram
 
 **What it is about.** The attacker cannot read the response (SOP prevents it), but does not need to: the goal is a **state-changing action** performed in the name of the victim, such as a money transfer, a password or e-mail change, or deleting data. The server cannot distinguish a deliberate action from a forged one, because both carry valid credentials.
 
-**Solutions.** All defences rely on the same idea: the server must be able to tell a request that was really initiated by its own application from one that was triggered by a foreign site. There are three main techniques, which can be combined, followed by several supporting measures. See also [CSRF - Cross-Site Request Forgery](../general-topics/csrf-cross-site-request-forgery.md).
+**Solutions.** All defences rely on the same idea: the server must be able to tell a request that was really initiated by its own application from one that was triggered by a foreign site. There are three main techniques, which can be combined, followed by several supporting measures. See also [CSRF - Cross-Site Request Forgery](/broken/pages/Nl1BKWAe8J8i87Q97w3S).
 
 To protect applications from CSRF attacks, developers need to implement multiple layers of defense that ensure requests truly come from the intended user and origin. Here are the most common strategies:
 
@@ -210,7 +211,7 @@ To protect applications from CSRF attacks, developers need to implement multiple
 
 ### 1. SameSite Cookie Attribute
 
-The most effective modern defence is the **`SameSite` cookie attribute**, which instructs the browser *not to attach the cookie* to requests initiated from another site. With `SameSite=Strict`, the cookie is never sent in a cross-site request; `Lax` additionally allows it for top-level navigations using safe methods (a click on a link), which keeps links to your site working for logged-in users; `None` (with `Secure`) disables the protection. `Lax` is the default in current browsers, but it is better to set it explicitly. The advantage is that it needs no code on either side. A limitation is that it protects only against *cross-site* requests (not requests from a sibling subdomain under the same site), and it depends on the browser behaviour, so it is often combined with another technique.
+The most effective modern defence is the **`SameSite` cookie attribute**, which instructs the browser _not to attach the cookie_ to requests initiated from another site. With `SameSite=Strict`, the cookie is never sent in a cross-site request; `Lax` additionally allows it for top-level navigations using safe methods (a click on a link), which keeps links to your site working for logged-in users; `None` (with `Secure`) disables the protection. `Lax` is the default in current browsers, but it is better to set it explicitly. The advantage is that it needs no code on either side. A limitation is that it protects only against _cross-site_ requests (not requests from a sibling subdomain under the same site), and it depends on the browser behaviour, so it is often combined with another technique.
 
 **SameSite cookies** are a browser security feature designed to help protect against **Cross-Site Request Forgery (CSRF)** and certain types of cross-site tracking. They control whether cookies are sent along with requests that originate from different sites. By setting the `SameSite` attribute on a cookie, developers can specify how strictly the browser should limit its use:
 
@@ -218,7 +219,7 @@ The most effective modern defence is the **`SameSite` cookie attribute**, which 
 * **SameSite=Lax** - Cookies are sent for same-site requests and for top-level navigation (like clicking a link), but not for background requests (like images or iframes). Moreover, those requests must use safe HTTP methods (like GET). This is a balanced default that protects against most CSRF attacks while allowing common user flows (like opening the link from e-mail to view product).
 * **SameSite=None** - Cookies are sent with all requests, including cross-site ones, but must also be marked as `Secure` (only sent over HTTPS). This is necessary for scenarios like third-party APIs or embedded content, but it reintroduces CSRF risks if not combined with other protections.
 
-![SameSite cookie behavior demonstration](./imgs/samesite.jpg)
+![SameSite cookie behavior demonstration](<../.gitbook/assets/samesite (1).jpg>)
 
 By configuring `SameSite` correctly, developers reduce the chance that a malicious site can trick a user’s browser into sending cookies to another domain without their knowledge. It’s a simple but powerful layer of defense against CSRF.
 
@@ -260,6 +261,7 @@ sequenceDiagram
     B-->>V: transfer executed
 
     V->>E: opens a malicious page
+    E-->>V: page with hidden form to bank.example
     V->>B: forged POST /transfer + cookie (no token,<br/>evil.example cannot read it)
     Note over B: token missing or wrong
     B-->>V: 403 Forbidden
@@ -275,7 +277,6 @@ The **double submit cookie** is a stateless variant, suitable for single-page ap
   * If they match → the request is considered legitimate.
   * If they don’t match or the header is missing → the request is rejected.
 
-
 ```mermaid
 sequenceDiagram
     participant V as Victim's browser (SPA)
@@ -289,8 +290,9 @@ sequenceDiagram
     B-->>V: transfer executed
 
     V->>E: opens a malicious page
-    V->>B: forged POST /transfer + cookie only<br/>(evil.example cannot read the cookie,<br/>cannot set the header)
-    Note over B: header missing - values differ
+    E-->>V: page with hidden form to bank.example    
+    V->>B: forged POST /transfer + cookie only<br/>Cookie: XSRF-TOKEN=9c1d...<br/>(evil.example cannot read the cookie,<br/>cannot set the header)
+    Note over B: cookie ok, header missing - values differ
     B-->>V: 403 Forbidden
 ```
 
@@ -303,6 +305,10 @@ Applications that authenticate only with the `Authorization: Bearer` header (not
 ## XSS - Cross-Site Scripting
 
 **Cross-Site Scripting (XSS)** is a web security vulnerability that allows attackers to inject malicious scripts into web pages viewed by other users. When the victim’s browser loads the page, the injected script runs as if it were trusted content, giving the attacker access to sensitive data like cookies, session tokens, or user inputs.
+
+{% hint style="danger" %}
+Note that this kind of attack is a fatal one. If an XSS attack succeeds, the attacker gains full control over your website; they can read local data and cookies, and perform any operation.
+{% endhint %}
 
 The three main types of XSS attacks are Reflected, Stored, and DOM-based. Each differs in how the malicious script is injected and executed:
 
@@ -345,7 +351,7 @@ There are three classical types. **Stored XSS** keeps the malicious input in the
 
 #### Input & Output Handling
 
-**Input & Output Handling** is one of the most important defenses against XSS because it ensures that any data coming from users or external sources is properly cleaned before being displayed back in the browser. The idea is simple: never trust raw input, and always encode it correctly depending on where it will be used. For example, if a user enters `<script>alert('XSS')</script>` into a comment box, the server should sanitize the input so that the script tags are removed or escaped. On the output side, if you display user data inside HTML, you should encode special characters (`<`, `>`, `"`, `'`) so they appear as text rather than executable code. Similarly, if the data is inserted into JavaScript, you must escape quotes and backslashes to prevent breaking out of strings.&#x20;
+**Input & Output Handling** is one of the most important defenses against XSS because it ensures that any data coming from users or external sources is properly cleaned before being displayed back in the browser. The idea is simple: never trust raw input, and always encode it correctly depending on where it will be used. For example, if a user enters `<script>alert('XSS')</script>` into a comment box, the server should sanitize the input so that the script tags are removed or escaped. On the output side, if you display user data inside HTML, you should encode special characters (`<`, `>`, `"`, `'`) so they appear as text rather than executable code. Similarly, if the data is inserted into JavaScript, you must escape quotes and backslashes to prevent breaking out of strings.
 
 Example of input raw HTML:
 
@@ -401,15 +407,15 @@ The primary defence is **context-aware output encoding**: data is converted so t
 Content-Security-Policy: default-src 'self'; script-src 'self'; object-src 'none'
 ```
 
-Finally, mark session cookies `HttpOnly` so that scripts cannot read them, and be careful with third-party scripts. See also [XSS - Cross-Site Scripting](../general-topics/xss-cross-site-scripting.md).
+Finally, mark session cookies `HttpOnly` so that scripts cannot read them, and be careful with third-party scripts.&#x20;
 
-![XSS](./imgs/xss.jpg)
+![XSS](../.gitbook/assets/xss.jpg)
 
 ## Other Important Concepts
 
 ### SQL Injection and Other Injection Attacks
 
-**How it arises.** The application builds a database query by concatenating user input into a string: `"SELECT * FROM users WHERE name = '" + name + "'"`. An input such as `' OR '1'='1` changes the *structure* of the query, not just its data. The same principle applies to NoSQL queries, operating system commands, LDAP, XML parsers and template engines.
+**How it arises.** The application builds a database query by concatenating user input into a string: `"SELECT * FROM users WHERE name = '" + name + "'"`. An input such as `' OR '1'='1` changes the _structure_ of the query, not just its data. The same principle applies to NoSQL queries, operating system commands, LDAP, XML parsers and template engines.
 
 **Threat.** The attacker can read data they should not see, bypass login, modify or delete data, and in the worst case execute commands on the server. It is regularly among the most damaging vulnerabilities.
 
@@ -425,7 +431,7 @@ In addition, validate input, use an account for the database with the minimal ne
 
 ### Transport Security: HTTPS, TLS and HSTS
 
-**How it arises.** Plain HTTP sends everything, including passwords, cookies and tokens, as readable text, so anybody on the path (a Wi-Fi hotspot, a compromised router, an ISP) can read or modify it (*man-in-the-middle*).
+**How it arises.** Plain HTTP sends everything, including passwords, cookies and tokens, as readable text, so anybody on the path (a Wi-Fi hotspot, a compromised router, an ISP) can read or modify it (_man-in-the-middle_).
 
 **Solutions.** Use **HTTPS** (HTTP over TLS) for everything, with valid certificates (for example free ones from Let's Encrypt). The **HSTS** header (`Strict-Transport-Security`) instructs the browser to use only HTTPS for the domain in the future, defeating downgrade attacks. Cookies should carry the `Secure` flag. Internal service-to-service communication deserves TLS too, not only the public edge.
 
