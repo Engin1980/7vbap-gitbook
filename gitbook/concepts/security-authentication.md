@@ -217,11 +217,89 @@ The choice of the mechanism is only a part of the problem. When designing the lo
 
 As a practical recommendation for a typical student project: use a well-established framework (Spring Security) with a properly hashed password as a baseline, add TOTP or passkeys when the application deals with sensitive data, and consider delegating the whole problem to an external identity provider if the application is not primarily about identity management. Writing your own cryptography or your own authentication protocol is almost always a mistake.
 
-## Implementing Username and Password Authentication
+## So which one?
+
+#### 1. Implementing Your Own User Registration and Login
+
+In this model, your system fully handles account creation, password storage, login logic, and security controls.
+
+**Advantages:**
+
+* Full control over the user database and authentication flow.
+* Customizable to fit business requirements.
+* No dependency on external services or outages.
+
+**Disadvantages:**
+
+* Requires careful implementation of security measures (password hashing, rate limiting, MFA, etc.).
+* Increased responsibility for protecting sensitive data.
+* More work to implement and maintain.
+
+#### 2. Using External Identity Providers (e.g., GitHub, Google, Microsoft)
+
+Instead of handling passwords internally, authentication is delegated to trusted providers using OAuth2, OpenID Connect, or similar protocols.
+
+**Advantages:**
+
+* No need to store or handle user passwords.
+* Enhanced security provided by large, reliable identity platforms.
+* Easier onboarding for users who can log in with existing accounts.
+* Built‑in support for MFA and other modern authentication features.
+
+**Disadvantages:**
+
+* Requires user trust in third‑party services.
+* Dependency on provider availability and policies.
+* Limited control over identity data and registration flow.
+* Must implement token verification and securely manage identity provider integrations.
+
+
+# Implementing Username and Password Authentication
 
 Username and password remains the baseline of nearly every application, and even when you add a second factor or an external identity provider, the password is usually still there. It is also the mechanism where the most expensive mistakes are made, so this section looks at it in more detail: how a good password is chosen, how it must be stored, and which algorithm to use.
 
-### Choosing a Good Password
+## Basic rules
+
+#### 1. Protecting the Registration Form
+
+* **Always use HTTPS** to prevent credentials from being intercepted during transit.
+* **Rate‑limit registration attempts** to prevent automated account creation or credential‑stuffing attacks.
+* **Implement input validation and sanitization** to prevent injection attacks.
+* **Use CSRF protection** to prevent unauthorized form submissions from other sites.
+
+#### 2. Handling Passwords Securely
+
+* **Never store passwords in plain text.** Instead, store only a hashed representation.
+* Use a strong, modern password hashing algorithm such as **bcrypt, Argon2, or PBKDF2**.
+* Apply proper hashing parameters (cost factor / memory factor) to make brute force attacks significantly more difficult.
+* Add a **unique salt** per password (bcrypt and Argon2 include this automatically) to prevent rainbow‑table attacks.
+
+#### 3. Enforcing Password Policies
+
+* Require a minimum password length (e.g., 10–12 characters).
+* Optionally enforce complexity (uppercase, lowercase, symbols), though many modern guidelines prefer **length over complexity**.
+* Prevent common or compromised passwords using lists such as "Have I Been Pwned".
+
+#### 4. Verification & Account Activation
+
+* Send a **verification email** to confirm that the user owns the provided email address.
+* Until verified, the account should remain limited or inactive.
+
+#### 5. Storing User Data Safely
+
+* Store user credentials in a secure database with limited access.
+* Ensure that backups are encrypted.
+* Implement least‑privilege access for services and administrators.
+
+#### 6. Additional Best Practices
+
+* Use **logging and monitoring** for suspicious registration activity.
+* Implement **MFA** (multi‑factor authentication) as an optional or mandatory step.
+* Provide a secure **password reset** process using time‑limited tokens.
+
+A securely implemented registration process significantly reduces the risk of credential theft, unauthorized access, and data breaches, forming the foundation for a trustworthy authentication system.
+
+## Choosing a Good Password
 
 The strength of a password is determined by how many guesses an attacker needs. Two things matter: **length** and **unpredictability**. Each additional character multiplies the number of possibilities, whereas replacing `a` with `@` or appending `1!` adds almost nothing, because attackers' tools know these habits. A random password of 12 or more characters, or a passphrase of four or more random words (see Passphrases above), is far better than a short "complex" one.
 
@@ -229,7 +307,7 @@ A good password is also **unique**: it is not reused on any other site. This is 
 
 As a developer you influence this through the **password policy**, and modern guidance (NIST SP 800-63B, OWASP) is quite different from the rules we know from the past. The recommended policy is to require a reasonable minimum length (at least 8, preferably 12 characters), allow a long maximum (64 characters or more) with all Unicode characters and spaces, allow pasting (so password managers work), and **check the password against a list of known leaked or common passwords** (for example with the Have I Been Pwned *Pwned Passwords* service, which can be queried by a hash prefix without revealing the password). The outdated practices are forced composition rules ("one uppercase, one digit, one special character"), which lead to `Password1!`, and forced periodic changes, which lead to `Password2!`. Passwords should be changed when there is a suspicion of compromise. A strength meter (such as zxcvbn) that gives feedback is more useful than rigid rules.
 
-### Why the Password Must Be Hashed
+## Why the Password Must Be Hashed
 
 The application only needs to answer the question "is the submitted password the same as the one the user chose?"; it never needs to know the password itself. Therefore, the server should store **a hash** of the password and not the password. A cryptographic hash function is a one-way function: computing the hash from the input is easy, but recovering the input from the hash is infeasible.
 
@@ -244,7 +322,7 @@ flowchart LR
     H2 --> C{"equal?"}
 ```
 
-### Why Add a Salt
+## Why Add a Salt
 
 Plain hashing has a weakness: the same password always gives the same hash. An attacker can therefore prepare a huge table of hashes for common passwords in advance (a *lookup* or *rainbow table*) and look the stolen hashes up instantly. Moreover, in a leaked database all users with the same password have the same hash, so the attacker cracks them all at once and can see which users share a password.
 
