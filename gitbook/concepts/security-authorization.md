@@ -53,7 +53,13 @@ A **JSON Web Token** (RFC 7519, pronounced "jot") is a compact, URL-safe string 
 
 ### Structure of a JWT
 
-A JWT consists of three parts separated by dots, where each part is encoded by **Base64URL**:
+A JWT consists of **three parts**, separated by dots:
+
+1. **Header** – specifies the token type (JWT) and the signing algorithm (e.g., HS256).
+2. **Payload** – contains the **claims**, such as user ID, roles, expiration time, and any additional metadata.
+3. **Signature** – used to verify that the token has not been tampered with. It is created by taking the header and payload, encoding them, and signing them using a secret key (HMAC) or a private key (RSA/ECDSA).
+
+Each part is encoded by **Base64URL**:
 
 ```
 xxxxx.yyyyy.zzzzz
@@ -100,6 +106,45 @@ flowchart LR
 
 {% hint style="warning" %}
 The payload is only **encoded**, not encrypted. Anybody who obtains the token can read it (paste it into jwt.io and see). Never put passwords, personal data or other secrets into an ordinary signed JWT.
+{% endhint %}
+
+### Common JWT Claims
+
+<table data-header-hidden><thead><tr><th width="107"></th><th width="159"></th><th width="280"></th><th></th></tr></thead><tbody><tr><td>Claim Key</td><td>Name</td><td>Purpose</td><td>Example Value</td></tr><tr><td><code>sub</code></td><td>Subject *)</td><td>Identifies the user or entity the token refers to (id/email/...). </td><td><code>"12345"</code> </td></tr><tr><td><code>iss</code></td><td>Issuer</td><td>Identifies the authority that issued the token</td><td><code>"https://api.example.com"</code></td></tr><tr><td><code>aud</code></td><td>Audience</td><td>Specifies who the token is intended for</td><td><code>"my-frontend-app"</code></td></tr><tr><td><code>exp</code></td><td>Expiration Time *)</td><td>UNIX timestamp when the token expires</td><td><code>1712345678</code></td></tr><tr><td><code>iat</code></td><td>Issued At</td><td>UNIX timestamp when the token was created</td><td><code>1712331234</code></td></tr><tr><td><code>nbf</code></td><td>Not Before</td><td>Token becomes valid only after this time</td><td><code>1712335000</code></td></tr><tr><td><code>jti</code></td><td>JWT ID</td><td>A unique identifier for the token (useful for blacklist)</td><td><code>"token-abc-789"</code></td></tr></tbody></table>
+
+> \*) Items are typically mandatory.
+
+These claims help define the validity window, intended audience, issuer, and the identity represented by the token. Additional custom claims (e.g., `role`, `permissions`) can also be added depending on application needs.
+
+### Validation of Common Claims
+
+When verifying a JWT, the server not only checks the signature, but also validates key claims to ensure the token is used correctly and safely:
+
+* **`iat`** (Issued At):
+  * Ensures the token was not created "in the future" due to clock drift or tampering.
+  * The server checks that `iat <= current_time`.
+* **`nbf`** (Not Before):
+  * The token must not be accepted before this timestamp.
+  * The server checks that `current_time >= nbf`.
+* **`exp`** (Expiration Time):
+  * Defines when the token becomes invalid.
+  * The server checks that `current_time < exp`.
+  * If expired, the token is rejected.
+* **`iss`** (Issuer):
+  * Confirms that the token was issued by the expected authority.
+  * The server compares the claim with its configured trusted issuer(s).
+  * If the value does not match (e.g., `"https://api.example.com"`), the token is rejected.
+* **`aud`** (Audience):
+  * Ensures the token is intended for the current service.
+  * The server verifies that the claim matches its own identifier (e.g., app name, API URL).
+  * If the audience does not match, the token must be rejected.
+
+Time‑based claims (`iat`, `nbf`, `exp`) typically allow a small **time skew** to compensate for differences between server clocks in distributed systems.
+
+By validating these claims along with the signature, the server ensures the JWT is both **authentic** (not tampered with) and **used under the correct conditions** (correct time window, issuer, and audience).
+
+{% hint style="info" %}
+A significant advantage of JWTs is that the token generation does not need to occur on the target backend; instead, it is often delegated to a trusted third-party service known as an **Identity Provider** (IdP). In this distributed setup, it is crucial to use asymmetric cryptography (a combination of a private and public key). The IdP signs the token using its private key, while the backend services verify it using the corresponding public key. This separation ensures security because the private signing key is never shared with the audience, preventing the backend services from forging valid tokens.
 {% endhint %}
 
 ### Why Is JWT Secure?
@@ -224,6 +269,24 @@ The right lifetimes are a compromise between security (the shorter, the smaller 
 | Access token | 5-15 minutes (up to 1 hour for low-risk applications) | Sent with every request, so it should be short; it limits the damage of a theft because it cannot be easily revoked |
 | Refresh token | Hours to days for sensitive applications (for example banking: minutes to hours of inactivity), 7-30 days for common web applications, longer for "remember me" or mobile apps | Sent only to the token endpoint; often has a sliding expiration (extended by activity) plus an absolute maximum, and is rotated on each use |
 | ID token (OpenID Connect) | Minutes | Only proves the login to the client application, it is not used to call APIs |
+
+The cooperation between the access token and refresh token works as follows:
+
+1. **Login:**
+   * User provides credentials.
+   * Server issues a short-lived access token and a long-lived refresh token and send both of them back to the client. Server also keeps its own list of valid refresh tokens.
+2. **Accessing resources:**
+   * Client sends the access token (only) in the Authorization header for API requests.
+   * Server validates the access token as a common JWT. If valid, request proceeds.
+3. **Token expiration:**
+   * When the access token expires and is rejected by the server, the client sends immediatelly a new request with the refresh token to a dedicated endpoint.
+   * Server validates the refresh token (w.r.t to its own list of valid refresh tokens) and, if valid, issues a new access token (and optionally a new refresh token).
+4. **Logout:**
+   * Client deletes both access and refresh tokens.
+   * Server may revoke the refresh token (if a revocation mechanism exists), effectively ending the session.
+   * Note that the access token still remains valid (until it expiration). However, as its life-span is short, it is typically not a big issue.
+
+**Note:** For long-term logins (weeks/months), it is recommended to **rotate the refresh token**. This means issuing a new refresh token each time the old one is used, invalidating the previous one to reduce risk if a token is stolen.
 
 {% hint style="info" %}
 Specific long-running tasks do not fit this model well. An export that runs for an hour, a file upload, a batch job or a link in an e-mail that must work for a day cannot depend on a 15-minute access token, and you should not make the access token long-lived for everybody just because of such exceptions. Instead, issue a dedicated **custom token** for that single purpose: a separate token with a narrow scope (for example only `report:download` for one specific report), its own audience, a lifetime matching the task, and preferably single use. If it leaks, the damage is limited to that one operation. Typical examples are signed download URLs, password-reset and e-mail verification tokens, and tokens for background jobs or service-to-service calls.
